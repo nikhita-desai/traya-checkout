@@ -20,7 +20,7 @@ function Extension() {
   const Attributes = useAttributes();
   const lastAttribute = Attributes.filter((attribute) => {
     if (attribute.key === "prepaid") {
-      return attribute;
+      return attribute; 
     }
   });
   function formatPhoneNumber(phoneNumber) {

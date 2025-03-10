@@ -1,0 +1,18 @@
+query RunInput {
+  cart {
+    prepaid: attribute(key: "prepaid") {
+      value
+    }
+    cost {
+      totalAmount {
+        amount
+      }
+    }
+  }
+  paymentMethods {
+    __typename
+    id
+    name
+    placements
+  }
+}

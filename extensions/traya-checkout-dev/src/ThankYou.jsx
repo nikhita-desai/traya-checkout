@@ -53,8 +53,8 @@ function Attribution() {
             inlineAlignment={`center`}
             to={`${
               lastAttribute.length === 0
-                ? `https://form.traya.health/pages/reschedule-slot/`
-                : `https://form.traya.health/pages/reschedule-slot/${lastAttribute[0].value}`
+                ? `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`
+                : `https://form.traya.health/pages/reschedule-slot/${lastAttribute[0].value}?orderPlatform=shopify`
             }`}
           >
             <Image

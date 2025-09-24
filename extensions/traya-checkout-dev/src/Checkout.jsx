@@ -8,6 +8,8 @@ import {
   usePhone,
   useSettings,
   useShippingAddress,
+  useCartLines,
+  useApplyCartLinesChange,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect } from "react";
 
@@ -18,11 +20,30 @@ export default reactExtension("purchase.checkout.block.render", () => (
 function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const Attributes = useAttributes();
+  const cartLines = useCartLines();
+  const applyCartLinesChange = useApplyCartLinesChange();
+
+  const FREE_PRODUCT_VARIANT_ID = "gid://shopify/ProductVariant/45277154377906";
+
+  // --- Force free product qty to 1 ---
+  useEffect(() => {
+    cartLines.forEach(async (line) => {
+      if (line.merchandise.id === FREE_PRODUCT_VARIANT_ID && line.quantity > 1) {
+        await applyCartLinesChange({
+          type: 'updateCartLine', // replaced CartLineChangeType.UpdateCartLine
+          id: line.id,
+          quantity: 1,
+        });
+      }
+    });
+  }, [cartLines, applyCartLinesChange]);
+
   const lastAttribute = Attributes.filter((attribute) => {
     if (attribute.key === "prepaid") {
       return attribute; 
     }
   });
+
   function formatPhoneNumber(phoneNumber) {
     let formattedNumber = phoneNumber;
     if (formattedNumber !== undefined && formattedNumber !== null) {
@@ -31,6 +52,7 @@ function Extension() {
     }
     return formattedNumber;
   }
+
   var {
     pincode1,
     pincode2,
@@ -83,6 +105,7 @@ function Extension() {
   if (phone_numbers === null || phone_numbers === undefined) {
     phone_numbers = "9058222810";
   }
+
   const restrict_phones = phone_numbers.split(",");
   const zip1 = pincode1.split(","),
     zip2 = pincode2.split(","),
@@ -100,33 +123,31 @@ function Extension() {
       ShippingAddress?.phone === undefined ? "" : ShippingAddress?.phone;
 
   async function changePreValues(key, value) {
-    const attribute = await changeAttribute({
+    await changeAttribute({
       type: "updateAttribute",
       key: `${key}`,
       value: `${value}`,
     });
-    // console.log('attribute: ', attribute);
   }
   async function updateAddress(address) {
     const code = await changeAddress({
       type: "updateShippingAddress",
       address: address,
     });
-    // console.log("code", code);
     if(code.type === "success") {
       changePreValues("first_name", "");
       changePreValues("phone", "");
     }
   }
+
   const zipcode = ShippingAddress?.zip;
   if (zipArrays.some((zipArray) => zipArray.includes(zipcode)) === false) {
     async function change() {
-      const attribute = await changeAttribute({
+      await changeAttribute({
         type: "updateAttribute",
         key: "prepaid",
         value: "false",
       });
-      // console.log('attribute: ', attribute);
     }
     if (lastAttribute.length === 0 || lastAttribute[0]?.value === "true") {
       change();
@@ -134,31 +155,29 @@ function Extension() {
   } else {
     if (restrict_phones.includes(formatPhoneNumber(shippingPhone)) === true) {
       async function change() {
-        const attribute = await changeAttribute({
+        await changeAttribute({
           type: "updateAttribute",
           key: "prepaid",
           value: "false",
         });
-        // console.log('attribute: ', attribute);
       }
       if (lastAttribute.length === 0 || lastAttribute[0]?.value === "true") {
         change();
       }
     } else {
       async function change() {
-        const attribute = await changeAttribute({
+        await changeAttribute({
           type: "updateAttribute",
           key: "prepaid",
           value: "true",
         });
-        // console.log('attribute: ', attribute);
       }
       if (lastAttribute.length === 0 || lastAttribute[0]?.value === "false") {
         change();
-        // console.log('l', lastAttribute[0]);
       }
     }
   }
+
   useEffect(() => {
     var address = {};
     if (Attributes.some((attribute) => attribute.key === "first_name")) {
@@ -191,6 +210,7 @@ function Extension() {
       updateAddress(address);
     }
   }, [Attributes]);
+
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     const regex = /^(?:\+91)?[6789][0-9]{4}([ ]?)[0-9]{5}$/;
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,12}$/i;
@@ -199,11 +219,7 @@ function Extension() {
       ? {
           behavior: "block",
           reason: "Email or phone is mandatory",
-          errors: [
-            {
-              message: "Please enter email or phone number",
-            },
-          ],
+          errors: [{ message: "Please enter email or phone number" }],
         }
       : email !== undefined &&
         emailRegex.test(email) === false &&
@@ -212,10 +228,7 @@ function Extension() {
           behavior: "block",
           reason: "Invalid Email",
           errors: [
-            {
-              message: "Please enter valid email",
-              target: "$.cart.buyerIdentity.email",
-            },
+            { message: "Please enter valid email", target: "$.cart.buyerIdentity.email" },
           ],
         }
       : email === undefined &&
@@ -225,10 +238,7 @@ function Extension() {
           behavior: "block",
           reason: "Invalid Phone",
           errors: [
-            {
-              message: "Please enter valid phone",
-              target: "$.cart.buyerIdentity.phone",
-            },
+            { message: "Please enter valid phone", target: "$.cart.buyerIdentity.phone" },
           ],
         }
       : ShippingAddress.firstName === undefined
@@ -236,10 +246,7 @@ function Extension() {
           behavior: "block",
           reason: "Invalid First Name",
           errors: [
-            {
-              message: "Please enter first name",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.firstName",
-            },
+            { message: "Please enter first name", target: "$.cart.deliveryGroups[0].deliveryAddress.firstName" },
           ],
         }
       : ShippingAddress?.firstName !== undefined &&
@@ -248,10 +255,7 @@ function Extension() {
           behavior: "block",
           reason: "Invalid First Name",
           errors: [
-            {
-              message: "Please enter valid first name",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.firstName",
-            },
+            { message: "Please enter valid first name", target: "$.cart.deliveryGroups[0].deliveryAddress.firstName" },
           ],
         }
       : ShippingAddress.lastName === undefined
@@ -259,10 +263,7 @@ function Extension() {
           behavior: "block",
           reason: "Invalid Last Name",
           errors: [
-            {
-              message: "Please enter last name",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.lastName",
-            },
+            { message: "Please enter last name", target: "$.cart.deliveryGroups[0].deliveryAddress.lastName" },
           ],
         }
       : ShippingAddress.lastName !== undefined &&
@@ -271,10 +272,7 @@ function Extension() {
           behavior: "block",
           reason: "Invalid Last Name",
           errors: [
-            {
-              message: "Please enter last name",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.lastName",
-            },
+            { message: "Please enter valid last name", target: "$.cart.deliveryGroups[0].deliveryAddress.lastName" },
           ],
         }
       : ShippingAddress?.address1 === undefined
@@ -282,10 +280,7 @@ function Extension() {
           behavior: "block",
           reason: "Address1 empty",
           errors: [
-            {
-              message: "Please enter address",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
-            },
+            { message: "Please enter address", target: "$.cart.deliveryGroups[0].deliveryAddress.address1" },
           ],
         }
       : ShippingAddress.address1 !== undefined &&
@@ -294,10 +289,7 @@ function Extension() {
           behavior: "block",
           reason: "Address1 Invalid",
           errors: [
-            {
-              message: "Please enter atleast 15 characters",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
-            },
+            { message: "Please enter atleast 15 characters", target: "$.cart.deliveryGroups[0].deliveryAddress.address1" },
           ],
         }
       : ShippingAddress?.phone === undefined
@@ -305,10 +297,7 @@ function Extension() {
           behavior: "block",
           reason: "Phone number empty",
           errors: [
-            {
-              message: "Please enter a phone number",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.phone",
-            },
+            { message: "Please enter a phone number", target: "$.cart.deliveryGroups[0].deliveryAddress.phone" },
           ],
         }
       : ShippingAddress?.phone !== undefined &&
@@ -317,15 +306,13 @@ function Extension() {
           behavior: "block",
           reason: "Invalid Phone number",
           errors: [
-            {
-              message: "Please enter valid number",
-              target: "$.cart.deliveryGroups[0].deliveryAddress.phone",
-            },
+            { message: "Please enter valid number", target: "$.cart.deliveryGroups[0].deliveryAddress.phone" },
           ],
         }
       : {
           behavior: "allow",
         };
   });
+
   return null;
 }

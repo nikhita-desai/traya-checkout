@@ -36,7 +36,7 @@ function Extension() {
     "gid://shopify/ProductVariant/46566505087232";
 
   useEffect(() => {
-    console.log('version 10')
+    console.log('version 14')
     cartLines.forEach((line) => {
       if (
         line.merchandise.id === FREE_PRODUCT_VARIANT_ID &&

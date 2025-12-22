@@ -15,50 +15,38 @@ const thankYouBlock = reactExtension("purchase.thank-you.block.render", () => (
 export { thankYouBlock };
 
 function Attribution() {
-  var { banner_image, banner_image2 } = useSettings();
-  if (
-    banner_image === "" ||
-    banner_image === undefined ||
-    banner_image === null
-  ) {
-    banner_image =
-      "https://cdn.shopify.com/s/files/1/0699/2199/7058/files/Group_1000006344.png?v=1718089642";
-  }
-  if (
-    banner_image2 === "" ||
-    banner_image2 === undefined ||
-    banner_image2 === null
-  ) {
-    banner_image2 =
-      "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
-  }
-  
-  const Attributes = useAttributes();
-  const lastAttribute = Attributes.filter((attribute) => {
-    if (attribute.key === "caseid") {
-      return attribute;
-    }
-  });
+  const { banner_image } = useSettings();
+  const attributes = useAttributes();
+  const genderAttr = attributes.find((attr) => attr.key === "user__gender");
+  const gender = genderAttr?.value?.toLowerCase();
+
+  const bannerImage2 =
+    gender === "female"
+      ? "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147227614.png?v=1761295389"
+      : "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
+
+  const bannerImage1 =
+    banner_image ||
+    "https://cdn.shopify.com/s/files/1/0699/2199/7058/files/Group_1000006344.png?v=1718089642";
+
+  const lastAttribute = attributes.find((attr) => attr.key === "caseid");
+  const rescheduleUrl = lastAttribute
+    ? `https://form.traya.health/pages/reschedule-slot/${lastAttribute.value}?orderPlatform=shopify`
+    : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
   return (
     <>
+      {/* Book a call banner */}
       <View
         inlineSize="fill"
         background="subdued"
         border="base"
         borderRadius="base"
       >
-        <InlineLayout columns={"fill"}>
-          <Pressable
-            inlineAlignment={`center`}
-            to={`${
-              lastAttribute.length === 0
-                ? `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`
-                : `https://form.traya.health/pages/reschedule-slot/${lastAttribute[0].value}?orderPlatform=shopify`
-            }`}
-          >
+        <InlineLayout columns="fill">
+          <Pressable inlineAlignment="center" to={rescheduleUrl}>
             <Image
-              source={banner_image}
+              source={bannerImage1}
               loading="eager"
               fit="cover"
               accessibilityRole="Book a call"
@@ -67,7 +55,10 @@ function Attribution() {
           </Pressable>
         </InlineLayout>
       </View>
+
       <BlockSpacer />
+
+      {/* Download App banner (gender-based) */}
       <View
         inlineSize="fill"
         background="subdued"
@@ -75,13 +66,13 @@ function Attribution() {
         borderRadius="base"
       >
         <BlockSpacer />
-        <InlineLayout columns={"fill"}>
+        <InlineLayout columns="fill">
           <Pressable
-            inlineAlignment={`center`}
+            inlineAlignment="center"
             to="https://trayahealth.app.link/xT3UrtZDvyb"
           >
             <Image
-              source={banner_image2}
+              source={bannerImage2}
               loading="eager"
               fit="cover"
               accessibilityRole="Download App"

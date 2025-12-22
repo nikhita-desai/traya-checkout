@@ -3,6 +3,7 @@ api_version = "2025-01"
 [[extensions]]
 name = "t:name"
 handle = "payment-customization"
+uid = "4f8a281d-8599-ed4f-dd32-1297c2872b96939fbf00"
 type = "function"
 
 description = "t:description"

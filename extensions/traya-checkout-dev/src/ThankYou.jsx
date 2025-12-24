@@ -30,8 +30,10 @@ function Attribution() {
     : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
   const bookCallBanner =
-    banner_image ||
-    "https://cdn.shopify.com/s/files/1/0699/2199/7058/files/Group_1000006344.png?v=1718089642";
+    gender === "female"
+      ? "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/slot-booking-female.webp?v=1766578030"
+      : banner_image ||
+        "https://cdn.shopify.com/s/files/1/0699/2199/7058/files/Group_1000006344.png?v=1718089642";
   
   const downloadBanner =
     gender === "female"

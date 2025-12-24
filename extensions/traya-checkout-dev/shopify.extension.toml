@@ -8,6 +8,7 @@ api_version = "2025-01"
 [[extensions]]
 name = "traya-checkout"
 handle = "traya-checkout"
+uid = "c4e79155-5625-7451-e153-b4990fd679935cfd6afe"
 type = "ui_extension"
 
 

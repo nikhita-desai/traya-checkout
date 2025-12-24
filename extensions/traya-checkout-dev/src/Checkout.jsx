@@ -141,7 +141,6 @@ function Extension() {
       });
     }
   }, [Attributes]);
-
   /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };

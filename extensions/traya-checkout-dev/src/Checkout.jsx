@@ -36,7 +36,7 @@ function Extension() {
     "gid://shopify/ProductVariant/45277154377906";
 
   useEffect(() => {
-    console.log('version 16')
+    console.log('version 17')
     cartLines.forEach((line) => {
       if (
         line.merchandise.id === FREE_PRODUCT_VARIANT_ID &&
@@ -112,48 +112,35 @@ function Extension() {
     }
   }, [zipcode, shippingPhone]);
 
-/* ---------------- AUTO ADDRESS FILL (FIX +1 ISSUE) ---------------- */
+  /* ---------------- AUTO ADDRESS FILL (SAFE) ---------------- */
   useEffect(() => {
-    const firstNameAttr = Attributes.find(a => a.key === "first_name");
-    const phoneAttr = Attributes.find(a => a.key === "phone");
+    if (addressUpdatedRef.current) return;
 
-    // nothing to update yet
-    if (!firstNameAttr?.value && !phoneAttr?.value) return;
+    const firstNameAttr = Attributes.find((a) => a.key === "first_name");
+    const phoneAttr = Attributes.find((a) => a.key === "phone");
 
-    // clone existing shipping address to avoid losing fields
-    let address = { ...ShippingAddress };
+    let address = {};
 
-    // ---- NAME ----
     if (firstNameAttr?.value) {
       const [firstName, lastName] = firstNameAttr.value.split(" ");
-      address.firstName = firstName || "";
-      address.lastName = lastName || "";
+      address.firstName = firstName;
+      if (lastName) address.lastName = lastName;
     }
 
-    // ---- PHONE ----
     if (phoneAttr?.value) {
       const formatted = formatPhone(phoneAttr.value);
-
       address.phone = formatted;
-
-      // 🔥 FORCE INDIA FOR 10 DIGITS
-      if (formatted.length === 10) {
-        address.countryCode = "IN";
-      }
-
-      // fallback to IN if missing
-      if (!address.countryCode) {
-        address.countryCode = "IN";
-      }
+      address.countryCode = formatted.length === 10 ? "IN" : "AE";
     }
 
-    changeAddress({
-      type: "updateShippingAddress",
-      address,
-    });
-
-  }, [Attributes, ShippingAddress]);
-
+    if (Object.keys(address).length > 0) {
+      addressUpdatedRef.current = true;
+      changeAddress({
+        type: "updateShippingAddress",
+        address,
+      });
+    }
+  }, [Attributes]);
   /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };

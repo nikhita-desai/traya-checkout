@@ -8,11 +8,15 @@ query RunInput {
         amount
       }
     }
+    deliveryGroups {
+      deliveryAddress {
+        countryCode
+      }
+    }
   }
   paymentMethods {
     __typename
     id
     name
-    placements
   }
 }

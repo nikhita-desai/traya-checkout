@@ -9,7 +9,7 @@ import {
   View,
 } from "@shopify/ui-extensions-react/checkout";
 
-export const thankYouBlock = reactExtension(
+export default reactExtension(
   "purchase.thank-you.block.render",
   () => <Attribution />
 );

@@ -19,26 +19,33 @@ const NO_CHANGES = {
 export function run(input) {
   const operations = [];
   const totalAmount = parseFloat(input.cart.cost.totalAmount.amount);
+  
+  // Find payment methods
   const cod = input.paymentMethods.find(
     (method) =>
       method.__typename === "PaymentCustomizationPaymentMethod" &&
       method.name.toLowerCase().includes("cod")
   );
+  
   const razorPay = input.paymentMethods.find(
     (method) =>
       method.__typename === "PaymentCustomizationPaymentMethod" &&
       method.name.toLowerCase().includes("razorpay")
   );
+  
   const simpl = input.paymentMethods.find(
     (method) =>
       method.__typename === "PaymentCustomizationPaymentMethod" &&
       method.name.toLowerCase().includes("simpl")
   );
+  
   const snapmint = input.paymentMethods.find(
     (method) =>
       method.__typename === "PaymentCustomizationPaymentMethod" &&
       method.name.toLowerCase().includes("snapmint")
   );
+  
+  // Check prepaid attribute
   const prepaid =
     input.cart?.prepaid === null
       ? true
@@ -48,64 +55,80 @@ export function run(input) {
       ? false
       : true;
 
-  if(razorPay) {
+  // Check if delivery address is in India
+  const deliveryAddress = input.cart.deliveryGroups?.[0]?.deliveryAddress;
+  const isIndianOrder = deliveryAddress?.countryCode === "IN";
+
+  // Move Razorpay to position 0 (first)
+  if (razorPay) {
     operations.push({
       move: {
-        paymentMethodId: razorPay?.id,
-        index: input.paymentMethods.length - (input.paymentMethods.length - 1)
+        paymentMethodId: razorPay.id,
+        index: 0
       }
     });
   }
 
-  if(simpl) {
+  // Move Simpl to position 1 (second)
+  if (simpl) {
     operations.push({
       move: {
-        paymentMethodId: simpl?.id,
-        index: input.paymentMethods.length - (input.paymentMethods.length - 2)
+        paymentMethodId: simpl.id,
+        index: 1
       }
     });
   }
 
-  if(snapmint) {
+  // Move Snapmint to position 2 (third)
+  if (snapmint) {
     operations.push({
       move: {
-        paymentMethodId: snapmint?.id,
-        index: input.paymentMethods.length - (input.paymentMethods.length - 3)
+        paymentMethodId: snapmint.id,
+        index: 2
       }
     });
   }
 
+  // COD logic with all conditions
   if (cod) {
+    let shouldHideCOD = false;
+
+    // Hide COD if order total is less than ₹1000
     if (totalAmount < 1000.0) {
-      operations.push({
-        hide: {
-          paymentMethodId: cod?.id,
-          placements: cod?.placements,
-        },
-      });
+      shouldHideCOD = true;
     }
+
+    // Hide COD if order total is greater than ₹10,000
     if (totalAmount > 10000.0) {
-      operations.push({
-        hide: {
-          paymentMethodId: cod?.id,
-          placements: cod?.placements,
-        },
-      });
+      shouldHideCOD = true;
     }
+
+    // Hide COD if prepaid attribute is false
     if (!prepaid) {
+      shouldHideCOD = true;
+    }
+
+    // Hide COD for international orders (non-Indian addresses)
+    if (!isIndianOrder) {
+      shouldHideCOD = true;
+    }
+
+    // Apply hide or move operation
+    if (shouldHideCOD) {
       operations.push({
         hide: {
-          paymentMethodId: cod?.id,
-          placements: cod?.placements,
-        },
+          paymentMethodId: cod.id
+        }
+      });
+    } else {
+      // Move COD to position 3 (fourth) only if not hiding it
+      operations.push({
+        move: {
+          paymentMethodId: cod.id,
+          index: 3
+        }
       });
     }
-    operations.push({
-      move: {
-        paymentMethodId: cod?.id,
-        index: input.paymentMethods.length - (input.paymentMethods.length - 4)
-      }
-    });
   }
 
   return {

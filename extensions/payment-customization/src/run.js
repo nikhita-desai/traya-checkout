@@ -45,15 +45,12 @@ export function run(input) {
       method.name.toLowerCase().includes("snapmint")
   );
   
-  // Check prepaid attribute
-  const prepaid =
-    input.cart?.prepaid === null
-      ? true
-      : input.cart.prepaid?.value === null
-      ? true
-      : input.cart.prepaid?.value === "false"
-      ? false
-      : true;
+  // FIXED: Default to false (show COD) when attribute is not set yet
+  // prepaid="true" means "prepaid ONLY" (hide COD)
+  // prepaid="false" means "COD allowed" (show COD)
+  // null/undefined means "not determined yet" (show COD by default)
+  const prepaidAttrValue = input.cart?.prepaid?.value;
+  const prepaidRequired = prepaidAttrValue === "true";
 
   // Check if delivery address is in India
   const deliveryAddress = input.cart.deliveryGroups?.[0]?.deliveryAddress;
@@ -103,8 +100,8 @@ export function run(input) {
       shouldHideCOD = true;
     }
 
-    // Hide COD if prepaid attribute is false
-    if (!prepaid) {
+    // Hide COD if prepaid attribute is explicitly set to "true" (prepaid required)
+    if (prepaidRequired) {
       shouldHideCOD = true;
     }
 

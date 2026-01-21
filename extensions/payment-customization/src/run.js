@@ -6,129 +6,121 @@
  */
 
 /**
- * @type {FunctionRunResult}
- */
-const NO_CHANGES = {
-  operations: [],
-};
-
-/**
  * @param {RunInput} input
  * @returns {FunctionRunResult}
  */
 export function run(input) {
   const operations = [];
+
   const totalAmount = parseFloat(input.cart.cost.totalAmount.amount);
-  
-  // Find payment methods
+
+  // ---------------- FIND PAYMENT METHODS ----------------
   const cod = input.paymentMethods.find(
-    (method) =>
-      method.__typename === "PaymentCustomizationPaymentMethod" &&
-      method.name.toLowerCase().includes("cod")
+    (m) =>
+      m.__typename === "PaymentCustomizationPaymentMethod" &&
+      m.name.toLowerCase().includes("cod")
   );
-  
+
   const razorPay = input.paymentMethods.find(
-    (method) =>
-      method.__typename === "PaymentCustomizationPaymentMethod" &&
-      method.name.toLowerCase().includes("razorpay")
+    (m) =>
+      m.__typename === "PaymentCustomizationPaymentMethod" &&
+      m.name.toLowerCase().includes("razorpay")
   );
-  
+
   const simpl = input.paymentMethods.find(
-    (method) =>
-      method.__typename === "PaymentCustomizationPaymentMethod" &&
-      method.name.toLowerCase().includes("simpl")
+    (m) =>
+      m.__typename === "PaymentCustomizationPaymentMethod" &&
+      m.name.toLowerCase().includes("simpl")
   );
-  
+
   const snapmint = input.paymentMethods.find(
-    (method) =>
-      method.__typename === "PaymentCustomizationPaymentMethod" &&
-      method.name.toLowerCase().includes("snapmint")
+    (m) =>
+      m.__typename === "PaymentCustomizationPaymentMethod" &&
+      m.name.toLowerCase().includes("snapmint")
   );
-  
-  // FIXED: Default to false (show COD) when attribute is not set yet
-  // prepaid="true" means "prepaid ONLY" (hide COD)
-  // prepaid="false" means "COD allowed" (show COD)
-  // null/undefined means "not determined yet" (show COD by default)
-  const prepaidAttrValue = input.cart?.prepaid?.value;
-  const prepaidRequired = prepaidAttrValue === "true";
 
-  // Check if delivery address is in India
-  const deliveryAddress = input.cart.deliveryGroups?.[0]?.deliveryAddress;
-  const isIndianOrder = deliveryAddress?.countryCode === "IN";
+  // ---------------- PREPAID ATTRIBUTE ----------------
+  // IMPORTANT:
+  // - attribute does NOT exist on page load
+  // - exists only after pincode logic runs in checkout JSX
+  const prepaidAttr = input.cart.prepaid;
+  const hasEligibilityData = prepaidAttr?.value !== null;
 
-  // Move Razorpay to position 0 (first)
+  const prepaid =
+    prepaidAttr?.value === "false" ? false : true;
+
+  // ---------------- PAYMENT ORDERING ----------------
   if (razorPay) {
     operations.push({
       move: {
         paymentMethodId: razorPay.id,
-        index: 0
-      }
+        index: 0,
+      },
     });
   }
 
-  // Move Simpl to position 1 (second)
   if (simpl) {
     operations.push({
       move: {
         paymentMethodId: simpl.id,
-        index: 1
-      }
+        index: 1,
+      },
     });
   }
 
-  // Move Snapmint to position 2 (third)
   if (snapmint) {
     operations.push({
       move: {
         paymentMethodId: snapmint.id,
-        index: 2
-      }
+        index: 2,
+      },
     });
   }
 
-  // COD logic with all conditions
+  // ---------------- COD LOGIC (2026 SAFE) ----------------
   if (cod) {
     let shouldHideCOD = false;
 
-    // Hide COD if order total is less than ₹1000
-    if (totalAmount < 1000.0) {
-      shouldHideCOD = true;
+    /**
+     * 🚨 CRITICAL RULE (2026-01):
+     * Do NOT evaluate COD rules until checkout JSX
+     * has calculated eligibility and set the attribute.
+     */
+    if (hasEligibilityData) {
+      // Amount rules
+      if (totalAmount < 1000.0 || totalAmount > 10000.0) {
+        shouldHideCOD = true;
+      }
+
+      // Prepaid rule
+      if (!prepaid) {
+        shouldHideCOD = true;
+      }
+
+      // Country rule (only reliable address field in 2026)
+      const countryCode =
+        input.cart.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
+
+      if (countryCode && countryCode !== "IN") {
+        shouldHideCOD = true;
+      }
     }
 
-    // Hide COD if order total is greater than ₹10,000
-    if (totalAmount > 10000.0) {
-      shouldHideCOD = true;
-    }
-
-    // Hide COD if prepaid attribute is explicitly set to "true" (prepaid required)
-    if (prepaidRequired) {
-      shouldHideCOD = true;
-    }
-
-    // Hide COD for international orders (non-Indian addresses)
-    if (!isIndianOrder) {
-      shouldHideCOD = true;
-    }
-
-    // Apply hide or move operation
     if (shouldHideCOD) {
       operations.push({
         hide: {
-          paymentMethodId: cod.id
-        }
+          paymentMethodId: cod.id,
+        },
       });
     } else {
-      // Move COD to position 3 (fourth) only if not hiding it
       operations.push({
         move: {
           paymentMethodId: cod.id,
-          index: 3
-        }
+          index: 3,
+        },
       });
     }
   }
 
-  return {
-    operations: operations,
-  };
+  return { operations };
 }

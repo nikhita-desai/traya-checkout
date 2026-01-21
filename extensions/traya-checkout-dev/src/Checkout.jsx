@@ -30,14 +30,13 @@ function Extension() {
   const phone = usePhone();
 
   const addressUpdatedRef = useRef(false);
-  const initialPrepaidSetRef = useRef(false);
 
   /* ---------------- FREE PRODUCT QTY FIX ---------------- */
   const FREE_PRODUCT_VARIANT_ID =
     "gid://shopify/ProductVariant/45277154377906";
 
   useEffect(() => {
-    console.log('version 20 - COD visibility fix')
+    console.log('version 24')
     cartLines.forEach((line) => {
       if (
         line.merchandise.id === FREE_PRODUCT_VARIANT_ID &&
@@ -71,7 +70,7 @@ function Extension() {
   pincode6 ||= pincode1;
   pincode7 ||= pincode1;
 
-  const restrictPhones = phone_numbers.split(",").map(p => p.trim());
+  const restrictPhones = phone_numbers.split(",");
 
   const zipArrays = [
     pincode1,
@@ -81,46 +80,42 @@ function Extension() {
     pincode5,
     pincode6,
     pincode7,
-  ].map((z) => z.split(",").map(code => code.trim()));
+  ].map((z) => z.split(","));
 
   /* ---------------- HELPERS ---------------- */
   function formatPhone(phone) {
     if (!phone) return "";
-    return phone.replace(/^\+91/, "").replace(/^0/, "").trim();
+    return phone.replace(/^\+91/, "").replace(/^0/, "");
   }
 
   const prepaidAttr = Attributes.find((a) => a.key === "prepaid");
   const currentPrepaid = prepaidAttr?.value;
-  const zipcode = ShippingAddress?.zip?.trim();
+
+  const zipcode = ShippingAddress?.zip;
   const shippingPhone = formatPhone(ShippingAddress?.phone);
 
-  /* ---------------- INITIAL PREPAID SETUP (NEW) ---------------- */
-  // Set prepaid to "false" (allow COD) on first load if not already set
-  // This ensures COD is visible by default
+  /* ---------------- RESET PREPAID WHEN ZIP REMOVED ---------------- */
   useEffect(() => {
-    if (initialPrepaidSetRef.current) return;
-    
-    if (!currentPrepaid) {
-      initialPrepaidSetRef.current = true;
+    if (zipcode) return;
+
+    if (currentPrepaid !== undefined) {
       changeAttribute({
-        type: "updateAttribute",
+        type: "removeAttribute",
         key: "prepaid",
-        value: "false", // Default: allow COD
       });
     }
-  }, [currentPrepaid]);
+  }, [zipcode]);
 
-  /* ---------------- PREPAID LOGIC (UPDATED) ---------------- */
+  /* ---------------- PREPAID LOGIC ---------------- */
   useEffect(() => {
-    // Only update prepaid logic once we have a zipcode
     if (!zipcode) return;
 
-    const zipAllowed = zipArrays.some((z) => z.includes(zipcode));
+    const zipRestricted = zipArrays.some((z) => z.includes(zipcode));
     const phoneRestricted = restrictPhones.includes(shippingPhone);
 
-    // If zipcode is allowed AND phone is not restricted = COD allowed (prepaid="false")
-    // Otherwise = Prepaid only (prepaid="true", hides COD)
-    const shouldBePrepaid = zipAllowed && !phoneRestricted ? "false" : "true";
+    const shouldBePrepaid =
+      !zipRestricted && !phoneRestricted ? "true" : "false";
+
 
     if (currentPrepaid !== shouldBePrepaid) {
       changeAttribute({
@@ -131,7 +126,7 @@ function Extension() {
     }
   }, [zipcode, shippingPhone]);
 
-  /* ---------------- AUTO ADDRESS FILL (SAFE) ---------------- */
+  /* ---------------- AUTO ADDRESS FILL ---------------- */
   useEffect(() => {
     if (addressUpdatedRef.current) return;
 
@@ -141,11 +136,9 @@ function Extension() {
     let address = {};
 
     if (firstNameAttr?.value) {
-      const [firstName, ...lastNameParts] = firstNameAttr.value.trim().split(" ");
+      const [firstName, lastName] = firstNameAttr.value.split(" ");
       address.firstName = firstName;
-      if (lastNameParts.length > 0) {
-        address.lastName = lastNameParts.join(" ");
-      }
+      if (lastName) address.lastName = lastName;
     }
 
     if (phoneAttr?.value) {
@@ -163,14 +156,13 @@ function Extension() {
     }
   }, [Attributes]);
 
-  /* ---------------- VALIDATION (FIXED) ---------------- */
+  /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };
 
     const phoneRegex = /^(?:\+91)?[6789][0-9]{9}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // FIXED: Allow spaces, hyphens, apostrophes, and periods in names
-    const nameRegex = /^[A-Za-z\s'\-\.]+$/;
+    const nameRegex = /^[A-Za-z]+$/;
 
     if (!email && !phone) {
       return {
@@ -182,42 +174,35 @@ function Extension() {
     if (email && !emailRegex.test(email)) {
       return {
         behavior: "block",
-        errors: [{ message: "Invalid email format" }],
+        errors: [{ message: "Invalid email" }],
       };
     }
 
     if (phone && !phoneRegex.test(phone)) {
       return {
         behavior: "block",
-        errors: [{ message: "Invalid phone number format" }],
+        errors: [{ message: "Invalid phone number" }],
       };
     }
 
-    // Validate first name
-    if (ShippingAddress?.firstName) {
-      const trimmedFirstName = ShippingAddress.firstName.trim();
-      if (!trimmedFirstName || trimmedFirstName.length < 2 || !nameRegex.test(trimmedFirstName)) {
-        return {
-          behavior: "block",
-          errors: [{ message: "Please enter a valid first name (minimum 2 characters)" }],
-        };
-      }
-    } else {
+    if (
+      !ShippingAddress?.firstName ||
+      !nameRegex.test(ShippingAddress.firstName)
+    ) {
       return {
         behavior: "block",
-        errors: [{ message: "First name is required" }],
+        errors: [{ message: "Invalid first name" }],
       };
     }
 
-    // Validate last name only if it exists
-    if (ShippingAddress?.lastName) {
-      const trimmedLastName = ShippingAddress.lastName.trim();
-      if (trimmedLastName.length > 0 && !nameRegex.test(trimmedLastName)) {
-        return {
-          behavior: "block",
-          errors: [{ message: "Please enter a valid last name" }],
-        };
-      }
+    if (
+      !ShippingAddress?.lastName ||
+      !nameRegex.test(ShippingAddress.lastName)
+    ) {
+      return {
+        behavior: "block",
+        errors: [{ message: "Invalid last name" }],
+      };
     }
 
     return { behavior: "allow" };

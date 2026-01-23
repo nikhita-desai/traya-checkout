@@ -29,14 +29,14 @@ function Attribution() {
     attributes
       .find((attr) => attr.key === "user__gender")
       ?.value?.toLowerCase() || null;
-
+ 
   const caseId =
     attributes.find((attr) => attr.key === "caseid")?.value || null;
 
   const isExperimentUser =
     gender === "male" &&
     caseId &&
-    /^[136789def]/i.test(caseId);
+    /^[16789def]/i.test(caseId);
 
   // Format slot time for display
   const formatSlotTime = (slotTime) => {
@@ -50,22 +50,44 @@ function Attribution() {
     });
   };
 
+  function fireClinicEvent(eventName, caseID) {
+    fetch("https://public-jgfas325.hav-g.in/eventMoengageWeb", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+      },
+      body: JSON.stringify({
+        eventName,
+        eventAttributes: {
+          generalAttributes: {
+            platform: "web_shopify",
+            domain: "traya.health",
+          },
+        },
+        caseId: caseID,
+      }),
+    });
+  }
+
   // AUTO SLOT BOOKING
   useEffect(() => {
     if (!isExperimentUser || !caseId) return;
 
     const autoBookSlot = async () => {
       setBookingStatus("loading");
-      
+      const AUTH_HEADERS = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+      };
+
       try {
         // Step 1: Fetch available slots
         const slotsResponse = await fetch(
           `https://api.dev.hav-g.in/v3/slots/${caseId}`,
           {
             method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            }
+            headers: AUTH_HEADERS,
           }
         );
 
@@ -102,9 +124,7 @@ function Attribution() {
           "https://api.dev.hav-g.in/v3/slots/slot-booking", // Replace with actual booking endpoint
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: AUTH_HEADERS,
             body: JSON.stringify(bookingPayload),
           }
         );
@@ -137,7 +157,7 @@ function Attribution() {
         "https://cdn.shopify.com/s/files/1/0699/2199/7058/files/Group_1000006344.png?v=1718089642";
 
   const bookCallLink = isExperimentUser
-    ? "https://trayahealth.app.link/t08ztsBwRZb"
+    ? "https://trayahealth.app.link/d0fLh8aweEb"
     : caseId
     ? `https://form.traya.health/pages/reschedule-slot/${caseId}?orderPlatform=shopify`
     : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
@@ -152,7 +172,7 @@ function Attribution() {
   return (
     <>
       {/* AUTO-BOOKING STATUS */}
-      {isExperimentUser && bookingStatus !== "idle" && (
+      {/* {isExperimentUser && bookingStatus !== "idle" && (
         <>
           {bookingStatus === "loading" && (
             <View border="base" padding="base" borderRadius="base">
@@ -176,12 +196,22 @@ function Attribution() {
           
           <BlockSpacer />
         </>
-      )}
+      )} */}
 
       {/* BOOK A CALL */}
       <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
         <InlineLayout columns="fill">
-          <Pressable inlineAlignment="center" to={bookCallLink}>
+          <Pressable
+            inlineAlignment="center"
+            to={bookCallLink}
+            onPress={() => {
+              if (caseId) {
+                fireClinicEvent(
+                  "webshopify_goto_app_now_click",
+                  caseId
+                );
+              }
+            }}>
             <Image
               source={bookCallBanner}
               loading="eager"
@@ -190,6 +220,7 @@ function Attribution() {
               accessibilityDescription="Book a call"
             />
           </Pressable>
+
         </InlineLayout>
       </View>
 

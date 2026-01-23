@@ -55,7 +55,7 @@ function Attribution() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+        "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90"
       },
       body: JSON.stringify({
         eventName,
@@ -78,13 +78,13 @@ function Attribution() {
       setBookingStatus("loading");
       const AUTH_HEADERS = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+        "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
       };
 
       try {
         // Step 1: Fetch available slots
         const slotsResponse = await fetch(
-          `https://api.dev.hav-g.in/v3/slots/${caseId}`,
+          `https://api.hav-g.in/v3/slots/${caseId}`,
           {
             method: "GET",
             headers: AUTH_HEADERS,
@@ -121,7 +121,7 @@ function Attribution() {
 
         // Step 4: Book the slot
         const bookingResponse = await fetch(
-          "https://api.dev.hav-g.in/v3/slots/slot-booking", // Replace with actual booking endpoint
+          "https://api.hav-g.in/v3/slots/slot-booking", // Replace with actual booking endpoint
           {
             method: "POST",
             headers: AUTH_HEADERS,

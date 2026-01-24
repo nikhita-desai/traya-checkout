@@ -10,6 +10,7 @@ import {
   useShippingAddress,
   useCartLines,
   useApplyCartLinesChange,
+  useSubtotalAmount,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useRef } from "react";
 
@@ -25,6 +26,7 @@ function Extension() {
   const Attributes = useAttributes();
   const cartLines = useCartLines();
   const ShippingAddress = useShippingAddress();
+  const subtotalAmount = useSubtotalAmount();
 
   const email = useEmail();
   const phone = usePhone();
@@ -36,7 +38,7 @@ function Extension() {
     "gid://shopify/ProductVariant/45277154377906";
 
   useEffect(() => {
-    console.log('version 18')
+    console.log('version 34 cod checks')
     cartLines.forEach((line) => {
       if (
         line.merchandise.id === FREE_PRODUCT_VARIANT_ID &&
@@ -70,7 +72,7 @@ function Extension() {
   pincode6 ||= pincode1;
   pincode7 ||= pincode1;
 
-  const restrictPhones = phone_numbers.split(",");
+  const restrictPhones = phone_numbers.split(",").map((p) => p.trim());
 
   const zipArrays = [
     pincode1,
@@ -80,7 +82,7 @@ function Extension() {
     pincode5,
     pincode6,
     pincode7,
-  ].map((z) => z.split(","));
+  ].map((z) => z.split(",").map((p) => p.trim()));
 
   /* ---------------- HELPERS ---------------- */
   function formatPhone(phone) {
@@ -90,18 +92,40 @@ function Extension() {
 
   const prepaidAttr = Attributes.find((a) => a.key === "prepaid");
   const currentPrepaid = prepaidAttr?.value;
+
   const zipcode = ShippingAddress?.zip;
   const shippingPhone = formatPhone(ShippingAddress?.phone);
+  const countryCode = ShippingAddress?.countryCode;
 
-  /* ---------------- PREPAID LOGIC (SAFE) ---------------- */
+  const cartTotal = subtotalAmount
+    ? parseFloat(subtotalAmount.amount)
+    : 0;
+
+  /* ---------------- RESET ON PAGE LOAD / ZIP REMOVED ---------------- */
   useEffect(() => {
-    if (!zipcode) return;
+    if (!zipcode && currentPrepaid !== undefined) {
+      changeAttribute({
+        type: "removeAttribute",
+        key: "prepaid",
+      });
+    }
+  }, [zipcode]);
 
-    const zipAllowed = zipArrays.some((z) => z.includes(zipcode));
+  /* ---------------- COD VALIDATION AFTER USER INPUT ---------------- */
+  useEffect(() => {
+    // wait until user enters required data
+    if (!zipcode || !shippingPhone || !countryCode) return;
+
+    const cartTotalInvalid = cartTotal < 1000 || cartTotal > 10000;
+    const isInternational = countryCode !== "IN";
+    const zipRestricted = zipArrays.some((z) => z.includes(zipcode));
     const phoneRestricted = restrictPhones.includes(shippingPhone);
 
+    // COD allowed ONLY if all pass
     const shouldBePrepaid =
-      zipAllowed && !phoneRestricted ? "true" : "false";
+      cartTotalInvalid || isInternational || zipRestricted || phoneRestricted
+        ? "false"   // hide COD
+        : "true";   // show COD
 
     if (currentPrepaid !== shouldBePrepaid) {
       changeAttribute({
@@ -110,9 +134,9 @@ function Extension() {
         value: shouldBePrepaid,
       });
     }
-  }, [zipcode, shippingPhone]);
+  }, [zipcode, shippingPhone, countryCode, cartTotal]);
 
-  /* ---------------- AUTO ADDRESS FILL (SAFE) ---------------- */
+  /* ---------------- AUTO ADDRESS FILL ---------------- */
   useEffect(() => {
     if (addressUpdatedRef.current) return;
 
@@ -141,6 +165,7 @@ function Extension() {
       });
     }
   }, [Attributes]);
+
   /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };

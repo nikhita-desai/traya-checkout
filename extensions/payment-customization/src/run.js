@@ -39,86 +39,63 @@ export function run(input) {
       m.name.toLowerCase().includes("snapmint")
   );
 
+  // ---------------- PAYMENT ORDER ----------------
+  if (razorPay) operations.push({ move: { paymentMethodId: razorPay.id, index: 0 }});
+  if (simpl) operations.push({ move: { paymentMethodId: simpl.id, index: 1 }});
+  if (snapmint) operations.push({ move: { paymentMethodId: snapmint.id, index: 2 }});
+
   // ---------------- PREPAID ATTRIBUTE ----------------
-  // IMPORTANT:
-  // - attribute does NOT exist on page load
-  // - exists only after pincode logic runs in checkout JSX
-  const prepaidAttr = input.cart.prepaid;
-  const hasEligibilityData = prepaidAttr?.value !== null;
+  // This attribute is set by checkout.jsx after user enters pincode & phone
+  const prepaidAttr = input.cart?.prepaid;
+  const hasEligibilityData =
+    prepaidAttr?.value !== null && prepaidAttr?.value !== undefined;
 
-  const prepaid =
-    prepaidAttr?.value === "false" ? false : true;
+  // true = COD allowed, false = COD blocked
+  const prepaid = prepaidAttr?.value === "true";
 
-  // ---------------- PAYMENT ORDERING ----------------
-  if (razorPay) {
-    operations.push({
-      move: {
-        paymentMethodId: razorPay.id,
-        index: 0,
-      },
-    });
-  }
-
-  if (simpl) {
-    operations.push({
-      move: {
-        paymentMethodId: simpl.id,
-        index: 1,
-      },
-    });
-  }
-
-  if (snapmint) {
-    operations.push({
-      move: {
-        paymentMethodId: snapmint.id,
-        index: 2,
-      },
-    });
-  }
-
-  // ---------------- COD LOGIC (2026 SAFE) ----------------
+  // ---------------- COD LOGIC ----------------
   if (cod) {
-    let shouldHideCOD = false;
-
-    /**
-     * 🚨 CRITICAL RULE (2026-01):
-     * Do NOT evaluate COD rules until checkout JSX
-     * has calculated eligibility and set the attribute.
-     */
-    if (hasEligibilityData) {
-      // Amount rules
-      if (totalAmount < 1000.0 || totalAmount > 10000.0) {
-        shouldHideCOD = true;
-      }
-
-      // Prepaid rule
-      if (!prepaid) {
-        shouldHideCOD = true;
-      }
-
-      // Country rule (only reliable address field in 2026)
-      const countryCode =
-        input.cart.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
-
-      if (countryCode && countryCode !== "IN") {
-        shouldHideCOD = true;
-      }
-    }
-
-    if (shouldHideCOD) {
-      operations.push({
-        hide: {
-          paymentMethodId: cod.id,
-        },
-      });
-    } else {
+    // Page load → show COD
+    if (!hasEligibilityData) {
       operations.push({
         move: {
           paymentMethodId: cod.id,
           index: 3,
         },
       });
+    } else {
+      let shouldHideCOD = false;
+      // 1. Amount rule
+      if (totalAmount < 1000 || totalAmount > 10000) {
+        shouldHideCOD = true;
+      }
+
+      // 2. Country rule (only if country exists)
+      const countryCode =
+        input.cart.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
+
+      if (countryCode && countryCode !== "IN") {
+        shouldHideCOD = true;
+      }
+
+      // 3 & 4. Pincode + phone rule (from checkout.jsx)
+      if (!prepaid) {
+        shouldHideCOD = true;
+      }
+
+      // Apply result
+      if (shouldHideCOD) {
+        operations.push({
+          hide: { paymentMethodId: cod.id },
+        });
+      } else {
+        operations.push({
+          move: {
+            paymentMethodId: cod.id,
+            index: 3,
+          },
+        });
+      }
     }
   }
 

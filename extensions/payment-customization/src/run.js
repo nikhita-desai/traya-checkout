@@ -11,6 +11,7 @@
  */
 export function run(input) {
   const operations = [];
+
   const totalAmount = parseFloat(input.cart.cost.totalAmount.amount);
 
   // ---------------- FIND PAYMENT METHODS ----------------
@@ -64,7 +65,6 @@ export function run(input) {
       });
     } else {
       let shouldHideCOD = false;
-
       // 1. Amount rule
       if (totalAmount < 1000 || totalAmount > 10000) {
         shouldHideCOD = true;

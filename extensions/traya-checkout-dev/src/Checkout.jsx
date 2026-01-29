@@ -38,7 +38,7 @@ function Extension() {
     "gid://shopify/ProductVariant/45277154377906";
 
   useEffect(() => {
-    console.log('version 41 cod checks')
+    console.log('version 43 cod checks')
     cartLines.forEach((line) => {
       if (
         line.merchandise.id === FREE_PRODUCT_VARIANT_ID &&
@@ -158,54 +158,140 @@ function Extension() {
 
   /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
-    if (!canBlockProgress) return { behavior: "allow" };
-
-    const phoneRegex = /^(?:\+91)?[6789][0-9]{9}$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regex = /^(?:\+91)?[6789][0-9]{4}([ ]?)[0-9]{5}$/;
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,12}$/i;
     const nameRegex = /^[A-Za-z]+$/;
-
-    if (!email && !phone) {
-      return {
-        behavior: "block",
-        errors: [{ message: "Email or phone is required" }],
-      };
-    }
-
-    if (email && !emailRegex.test(email)) {
-      return {
-        behavior: "block",
-        errors: [{ message: "Invalid email" }],
-      };
-    }
-
-    if (phone && !phoneRegex.test(phone)) {
-      return {
-        behavior: "block",
-        errors: [{ message: "Invalid phone number" }],
-      };
-    }
-
-    if (
-      !ShippingAddress?.firstName ||
-      !nameRegex.test(ShippingAddress.firstName)
-    ) {
-      return {
-        behavior: "block",
-        errors: [{ message: "Invalid first name" }],
-      };
-    }
-
-    if (
-      !ShippingAddress?.lastName ||
-      !nameRegex.test(ShippingAddress.lastName)
-    ) {
-      return {
-        behavior: "block",
-        errors: [{ message: "Invalid last name" }],
-      };
-    }
-
-    return { behavior: "allow" };
+    return email === undefined && phone === undefined
+      ? {
+          behavior: "block",
+          reason: "Email or phone is mandatory",
+          errors: [
+            {
+              message: "Please enter email or phone number",
+            },
+          ],
+        }
+      : email !== undefined &&
+        emailRegex.test(email) === false &&
+        phone === undefined
+      ? {
+          behavior: "block",
+          reason: "Invalid Email",
+          errors: [
+            {
+              message: "Please enter valid email",
+              target: "$.cart.buyerIdentity.email",
+            },
+          ],
+        }
+      : email === undefined &&
+        phone !== undefined &&
+        regex.test(phone) === false
+      ? {
+          behavior: "block",
+          reason: "Invalid Phone",
+          errors: [
+            {
+              message: "Please enter valid phone",
+              target: "$.cart.buyerIdentity.phone",
+            },
+          ],
+        }
+      : ShippingAddress.firstName === undefined
+      ? {
+          behavior: "block",
+          reason: "Invalid First Name",
+          errors: [
+            {
+              message: "Please enter first name",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.firstName",
+            },
+          ],
+        }
+      : ShippingAddress?.firstName !== undefined &&
+        nameRegex.test(ShippingAddress?.firstName) === false
+      ? {
+          behavior: "block",
+          reason: "Invalid First Name",
+          errors: [
+            {
+              message: "Please enter valid first name",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.firstName",
+            },
+          ],
+        }
+      : ShippingAddress.lastName === undefined
+      ? {
+          behavior: "block",
+          reason: "Invalid Last Name",
+          errors: [
+            {
+              message: "Please enter last name",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.lastName",
+            },
+          ],
+        }
+      : ShippingAddress.lastName !== undefined &&
+        nameRegex.test(ShippingAddress?.lastName) === false
+      ? {
+          behavior: "block",
+          reason: "Invalid Last Name",
+          errors: [
+            {
+              message: "Please enter last name",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.lastName",
+            },
+          ],
+        }
+      : ShippingAddress?.address1 === undefined
+      ? {
+          behavior: "block",
+          reason: "Address1 empty",
+          errors: [
+            {
+              message: "Please enter address",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
+            },
+          ],
+        }
+      : ShippingAddress.address1 !== undefined &&
+        ShippingAddress.address1.length < 15
+      ? {
+          behavior: "block",
+          reason: "Address1 Invalid",
+          errors: [
+            {
+              message: "Please enter atleast 15 characters",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
+            },
+          ],
+        }
+      : ShippingAddress?.phone === undefined
+      ? {
+          behavior: "block",
+          reason: "Phone number empty",
+          errors: [
+            {
+              message: "Please enter a phone number",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.phone",
+            },
+          ],
+        }
+      : ShippingAddress?.phone !== undefined &&
+        regex.test(ShippingAddress?.phone) === false
+      ? {
+          behavior: "block",
+          reason: "Invalid Phone number",
+          errors: [
+            {
+              message: "Please enter valid number",
+              target: "$.cart.deliveryGroups[0].deliveryAddress.phone",
+            },
+          ],
+        }
+      : {
+          behavior: "allow",
+        };
   });
 
   return null;

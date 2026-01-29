@@ -101,16 +101,6 @@ function Extension() {
     ? parseFloat(subtotalAmount.amount)
     : 0;
 
-  /* ---------------- RESET ON PAGE LOAD / ZIP REMOVED ---------------- */
-  useEffect(() => {
-    if (!zipcode && currentPrepaid !== undefined) {
-      changeAttribute({
-        type: "removeAttribute",
-        key: "prepaid",
-      });
-    }
-  }, [zipcode]);
-
   /* ---------------- COD VALIDATION AFTER USER INPUT ---------------- */
   useEffect(() => {
     // wait until user enters required data
@@ -121,11 +111,11 @@ function Extension() {
     const zipRestricted = zipArrays.some((z) => z.includes(zipcode));
     const phoneRestricted = restrictPhones.includes(shippingPhone);
 
-    // COD allowed ONLY if all pass
+    // prepaid = true means COD allowed
     const shouldBePrepaid =
       cartTotalInvalid || isInternational || zipRestricted || phoneRestricted
         ? "false"   // hide COD
-        : "true";   // show COD
+        : "true";   // allow COD
 
     if (currentPrepaid !== shouldBePrepaid) {
       changeAttribute({

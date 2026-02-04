@@ -44,58 +44,43 @@ export function run(input) {
   if (simpl) operations.push({ move: { paymentMethodId: simpl.id, index: 1 }});
   if (snapmint) operations.push({ move: { paymentMethodId: snapmint.id, index: 2 }});
 
-  // ---------------- PREPAID ATTRIBUTE ----------------
-  // This attribute is set by checkout.jsx after user enters pincode & phone
-  const prepaidAttr = input.cart?.prepaid;
+  const prepaidAttr = input.cart.prepaid;
+
   const hasEligibilityData =
     prepaidAttr?.value !== null && prepaidAttr?.value !== undefined;
 
-  // true = COD allowed, false = COD blocked
   const prepaid = prepaidAttr?.value === "true";
 
   // ---------------- COD LOGIC ----------------
   if (cod) {
-    // Page load → show COD
-    if (!hasEligibilityData) {
+    let shouldHideCOD = false;
+
+    // 1Cart value rule (always apply)
+    if (totalAmount < 1000 || totalAmount > 10000) {
+      shouldHideCOD = true;
+    }
+
+    // Country rule (only after user enters address)
+    const countryCode =
+      input.cart.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
+
+    if (hasEligibilityData && countryCode && countryCode !== "IN") {
+      shouldHideCOD = true;
+    }
+
+    // Phone + pincode rule from checkout.jsx
+    if (hasEligibilityData && !prepaid) {
+      shouldHideCOD = true;
+    }
+
+    if (shouldHideCOD) {
       operations.push({
-        move: {
-          paymentMethodId: cod.id,
-          index: 3,
-        },
+        hide: { paymentMethodId: cod.id },
       });
     } else {
-      let shouldHideCOD = false;
-      // 1. Amount rule
-      if (totalAmount < 1000 || totalAmount > 10000) {
-        shouldHideCOD = true;
-      }
-
-      // 2. Country rule (only if country exists)
-      const countryCode =
-        input.cart.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
-
-      if (countryCode && countryCode !== "IN") {
-        shouldHideCOD = true;
-      }
-
-      // 3 & 4. Pincode + phone rule (from checkout.jsx)
-      if (!prepaid) {
-        shouldHideCOD = true;
-      }
-
-      // Apply result
-      if (shouldHideCOD) {
-        operations.push({
-          hide: { paymentMethodId: cod.id },
-        });
-      } else {
-        operations.push({
-          move: {
-            paymentMethodId: cod.id,
-            index: 3,
-          },
-        });
-      }
+      operations.push({
+        move: { paymentMethodId: cod.id, index: 3 },
+      });
     }
   }
 

@@ -81,7 +81,12 @@ function Attribution() {
         "Content-Type": "application/json",
         "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
       };
-
+      // const autoBookSlot = async () => { let baseUrls = { 
+      //   DEV: 'https://api.dev.hav-g.in/', 
+      //   PROD: 'https://api.hav-g.in/' } 
+      // let tokens = { 
+      //   DEV:{ "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d" },
+      //  PROD: { "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90" } }
       try {
         // Step 1: Fetch available slots
         const slotsResponse = await fetch(
@@ -118,6 +123,7 @@ function Attribution() {
           order_related: false,
           is_rescheduling: true,
           from_crm: false,
+          is_autoSlotBooked: true
         };
 
         // Step 4: Book the slot
@@ -172,33 +178,6 @@ function Attribution() {
 
   return (
     <>
-      {/* AUTO-BOOKING STATUS */}
-      {/* {isExperimentUser && bookingStatus !== "idle" && (
-        <>
-          {bookingStatus === "loading" && (
-            <View border="base" padding="base" borderRadius="base">
-              <Text size="medium" emphasis="bold">Booking your consultation slot...</Text>
-              <BlockSpacer spacing="extraTight" />
-              <SkeletonText />
-            </View>
-          )}
-
-          {bookingStatus === "success" && (
-            <Banner status="success" title="Slot Booked! ✓">
-              {bookingMessage}
-            </Banner>
-          )}
-
-          {bookingStatus === "error" && (
-            <Banner status="warning" title="Booking Notice">
-              {bookingMessage}
-            </Banner>
-          )}
-          
-          <BlockSpacer />
-        </>
-      )} */}
-
       {/* BOOK A CALL */}
       <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
         <InlineLayout columns="fill">

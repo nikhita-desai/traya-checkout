@@ -34,9 +34,7 @@ function Attribution() {
     attributes.find((attr) => attr.key === "caseid")?.value || null;
 
   const isExperimentUser =
-    gender === "male" &&
-    caseId &&
-    /^[16789def]/i.test(caseId);
+    gender === "male";
 
   // Format slot time for display
   const formatSlotTime = (slotTime) => {

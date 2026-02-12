@@ -23,7 +23,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log('46 version - improved');
+  console.log('48 version - improved');
 
   const attributes = useAttributes();
   const cartLines = useCartLines();

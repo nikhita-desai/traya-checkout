@@ -19,11 +19,97 @@ export default reactExtension("purchase.checkout.block.render", () => (
   <Extension />
 ));
 
+/* ---------------- ADDRESS VALIDATION HELPERS ---------------- */
+const hasRepeatedSpecialCharacters = (text) => {
+  if (!text || typeof text !== "string") return false;
+  return /([!@#$%^&*()_+=\[\]{}|;:'",.<>?/\\`~-])\1{2,}/.test(text);
+};
+
+const containsOnlyPrintableASCII = (text) => {
+  if (!text || typeof text !== "string") return false;
+  for (const char of text) {
+    const code = char.charCodeAt(0);
+    if (code < 32 || code > 126) return false;
+  }
+  return true;
+};
+
+const validateAddress = (address) => {
+  if (!address) return [];
+
+  const errors = [];
+
+  const addr1 = address.address1?.trim();
+  const city = address.city?.trim();
+  const zip = address.zip?.trim();
+
+  /* ---- Address line ---- */
+  if (addr1) {
+    if (addr1.length < 5) {
+      errors.push({
+        message: "Please enter a complete address",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
+      });
+    } 
+    else if (!/[a-zA-Z]/.test(addr1)) {
+      errors.push({
+        message: "Please enter a valid address (street or area name required)",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
+      });
+    }
+    else if (!containsOnlyPrintableASCII(addr1)) {
+      errors.push({
+        message: "Address contains invalid characters",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
+      });
+    } 
+    else if (hasRepeatedSpecialCharacters(addr1)) {
+      errors.push({
+        message: "Address contains invalid repeated characters",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
+      });
+    }
+  }
+  /* ---- City ---- */
+  if (city) {
+    if (city.length < 2) {
+      errors.push({
+        message: "Please enter a valid city",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.city",
+      });
+    } else if (!containsOnlyPrintableASCII(city)) {
+      errors.push({
+        message: "City contains invalid characters",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.city",
+      });
+    } else if (hasRepeatedSpecialCharacters(city)) {
+      errors.push({
+        message: "City contains invalid characters",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.city",
+      });
+    }
+  }
+
+  /* ---- PIN ---- */
+  if (zip) {
+    if (!/^[1-9][0-9]{5}$/.test(zip)) {
+      errors.push({
+        message: "Please enter a valid 6-digit PIN code",
+        target: "$.cart.deliveryGroups[0].deliveryAddress.zip",
+      });
+    }
+  }
+
+  return errors;
+};
+
+/* ---------------- MAIN EXTENSION ---------------- */
+
 function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log('48 version - improved');
+  console.log("49 version - realistic address validation");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();
@@ -71,14 +157,13 @@ function Extension() {
     [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7]
   );
 
-  /* ---------------- HELPERS ---------------- */
   function formatPhone(p) {
     if (!p) return "";
     return p.replace(/^\+91/, "").replace(/^0/, "");
   }
 
   const zipcode = shippingAddress?.zip;
-  const shippingPhone = formatPhone(shippingAddress?.phone);
+  const shippingPhoneFormatted = formatPhone(shippingAddress?.phone);
   const countryCode = shippingAddress?.countryCode;
 
   const cartTotal = subtotalAmount ? parseFloat(subtotalAmount.amount) : 0;
@@ -109,12 +194,12 @@ function Extension() {
   /* ---------------- SET PREPAID ATTRIBUTE ---------------- */
   useEffect(() => {
     if (processingAttrRef.current) return;
-    if (!zipcode || !shippingPhone || !countryCode) return;
+    if (!zipcode || !shippingPhoneFormatted || !countryCode) return;
 
     const cartTotalInvalid = cartTotal < 1000 || cartTotal > 10000;
     const isInternational = countryCode !== "IN";
     const zipRestricted = zipArrays.some((z) => z.includes(zipcode));
-    const phoneRestricted = restrictPhones.includes(shippingPhone);
+    const phoneRestricted = restrictPhones.includes(shippingPhoneFormatted);
 
     const shouldBePrepaid =
       cartTotalInvalid || isInternational || zipRestricted || phoneRestricted
@@ -137,7 +222,7 @@ function Extension() {
     }
   }, [
     zipcode,
-    shippingPhone,
+    shippingPhoneFormatted,
     countryCode,
     cartTotal,
     attributes,
@@ -179,7 +264,7 @@ function Extension() {
     }
   }, [attributes, changeAddress]);
 
-  /* ---------------- SAFE VALIDATION ONLY ---------------- */
+  /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };
 
@@ -204,7 +289,6 @@ function Extension() {
       };
     }
 
-    // buyer identity phone
     if (phone && !phoneRegex.test(phone)) {
       return {
         behavior: "block",
@@ -213,7 +297,6 @@ function Extension() {
       };
     }
 
-    // shipping address phone (THIS WAS MISSING)
     if (shippingPhone && !phoneRegex.test(shippingPhone)) {
       return {
         behavior: "block",
@@ -224,6 +307,16 @@ function Extension() {
             target: "$.cart.deliveryGroups[0].deliveryAddress.phone",
           },
         ],
+      };
+    }
+
+    const addressErrors = validateAddress(shippingAddress);
+
+    if (addressErrors.length > 0) {
+      return {
+        behavior: "block",
+        reason: "invalid_address",
+        errors: addressErrors,
       };
     }
 

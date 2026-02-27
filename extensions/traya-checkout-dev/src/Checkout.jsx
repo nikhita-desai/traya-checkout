@@ -84,7 +84,7 @@ function Extension() {
 
   /* ---------------- FREE PRODUCT QTY FIX ---------------- */
   useEffect(() => {
-    console.log('45 version - improved');
+    console.log("50 version - Thankyou page female auto slot booking");
     if (isFinalStepRef.current || processingCartRef.current) return;
 
     const freeProductLine = cartLines.find(

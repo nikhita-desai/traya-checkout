@@ -33,9 +33,22 @@ function Attribution() {
   const caseId =
     attributes.find((attr) => attr.key === "caseid")?.value || null;
 
-  const isExperimentUser =
-    gender === "male";
+  const hairStage =
+  attributes
+    .find((attr) => attr.key === "hair_Stage")
+    ?.value?.toLowerCase() || null;
+  
+  const isMaleExperimentUser = gender === "male";
+  const validFemalePrefixes = ["0", "1", "a", "b"];
+  const casePrefix = caseId?.charAt(0)?.toLowerCase();
 
+  const isFemaleExperimentUser =
+    gender === "female" &&
+    casePrefix &&
+    validFemalePrefixes.includes(casePrefix) &&
+    (hairStage === "hair thinning" || hairStage === "side thinning");
+
+  const isExperimentUser = isMaleExperimentUser || isFemaleExperimentUser;
   // Format slot time for display
   const formatSlotTime = (slotTime) => {
     const date = new Date(slotTime);
@@ -79,7 +92,6 @@ function Attribution() {
         "Content-Type": "application/json",
         "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
       };
-      // const autoBookSlot = async () => { let baseUrls = { 
       //   DEV: 'https://api.dev.hav-g.in/', 
       //   PROD: 'https://api.hav-g.in/' } 
       // let tokens = { 
@@ -87,7 +99,7 @@ function Attribution() {
       //  PROD: { "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90" } }
       try {
         // Step 1: Fetch available slots
-        const slotsResponse = await fetch(
+        const slotsResponse = await fetch (
           `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           {
             method: "GET",
@@ -183,7 +195,7 @@ function Attribution() {
             inlineAlignment="center"
             to={bookCallLink}
             onPress={() => {
-              if (caseId) {
+              if (caseId && isMaleExperimentUser) {
                 fireClinicEvent(
                   "webshopify_goto_app_now_click",
                   caseId

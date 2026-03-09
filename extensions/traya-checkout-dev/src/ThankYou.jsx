@@ -7,9 +7,6 @@ import {
   useAttributes,
   useSettings,
   View,
-  Banner,
-  Text,
-  SkeletonText,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useState } from "react";
 

@@ -96,7 +96,7 @@ function Attribution() {
         };
 
         const slotsResponse = await fetch(
-          `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+          `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
 
@@ -115,7 +115,7 @@ function Attribution() {
           is_autoSlotBooked: true
         };
 
-        await fetch("https://api.dev.hav-g.in/v3/slots/slot-booking", {
+        await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
           method: "POST",
           headers: AUTH_HEADERS,
           body: JSON.stringify(bookingPayload),

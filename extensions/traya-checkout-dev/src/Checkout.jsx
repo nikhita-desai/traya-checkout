@@ -108,7 +108,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("53 version - adding Order placed Backend event to Thankyou page");
+  console.log("54 version - experiment1 banner changes");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();

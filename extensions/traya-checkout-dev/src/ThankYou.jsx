@@ -141,29 +141,40 @@ function Attribution() {
     fireSlotEvent("order_placed", caseId, previousUrl);
 
   }, [caseId, gender]);
-  
+  const isUnknownUser =
+  !gender &&
+  !caseId &&
+  !hairStage;
   // ---------- BANNERS / LINKS ----------
   const DEFAULT_AUTO_BANNER =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/male_experiment1v2.webp?v=1773218398";
+  const FEMALE_AUTO_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/male_experiment1.webp?v=1772517436";
-
   const NEW_EXPERIMENT_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/male-experiment2.webp?v=1772517413";
 
   const FEMALE_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/slot-booking-female.webp?v=1766578030";
+    
+  const FALLBACK_BANNER =
+  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
 
   const autoSlotBanner =
-    isNewBannerExperimentUser
+    isUnknownUser
+      ? FALLBACK_BANNER
+      : isNewBannerExperimentUser
       ? NEW_EXPERIMENT_BANNER
-      : isAutoSlotUser
+      : isFemaleAutoSlotUser
+      ? FEMALE_AUTO_BANNER
+      : isAutoSlotMaleUser
       ? DEFAULT_AUTO_BANNER
       : gender === "female"
       ? FEMALE_BANNER
       : banner_image;
 
   const autoSlotLink =
-    isNewBannerExperimentUser
-      ? "https://trayahealth.app.link/d0fLh8aweEb"
+    isUnknownUser
+      ? "https://trayahealth.app.link/xT3UrtZDvyb"
       : isAutoSlotUser
       ? "https://trayahealth.app.link/d0fLh8aweEb"
       : caseId
@@ -202,13 +213,15 @@ function Attribution() {
       <BlockSpacer />
 
       {/* DOWNLOAD */}
-      <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
-        <InlineLayout columns="fill">
-          <Pressable inlineAlignment="center" to="https://trayahealth.app.link/xT3UrtZDvyb">
-            <Image source={downloadBanner} loading="eager" fit="cover" />
-          </Pressable>
-        </InlineLayout>
-      </View>
+      {/* {gender !== "male" && (
+        <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
+          <InlineLayout columns="fill">
+            <Pressable inlineAlignment="center" to="https://trayahealth.app.link/xT3UrtZDvyb">
+              <Image source={downloadBanner} loading="eager" fit="cover" />
+            </Pressable>
+          </InlineLayout>
+        </View>
+      )} */}
     </>
   );
 }

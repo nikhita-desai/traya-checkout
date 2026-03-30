@@ -8,18 +8,25 @@ import {
   useSettings,
   View,
 } from "@shopify/ui-extensions-react/checkout";
-import { useEffect } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export default reactExtension(
   "purchase.thank-you.block.render",
   () => <Attribution />
 );
 
+// Dev: 'https://public-zxhj2.dev.hav-g.in/', 
+// DEV: 'https://api.dev.hav-g.in/', 
+// DEV:{ "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d" }, 
+// PROD: 'https://public-jgfas325.hav-g.in/' 
+// PROD: 'https://api.hav-g.in/' }
+// PROD: { "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90" } }
+
 function Attribution() {
   const { banner_image } = useSettings();
   const attributes = useAttributes();
   const orderEventFired = useRef(false);
+
   const gender =
     attributes.find((attr) => attr.key === "user__gender")?.value?.toLowerCase() || null;
 
@@ -33,13 +40,12 @@ function Attribution() {
 
   const isMale = gender === "male";
 
-  // ---------- EXPERIMENT PREFIX ----------
-  const newBannerPrefixes = ["1","6","7","8","9","d","e","f"];
+  // ✅ NEW EXPERIMENT LOGIC (2–9)
+  const experimentPrefixes = ["2","3","4","5","6","7","8","9"];
 
-  const isNewBannerExperimentUser =
-    isMale &&
+  const isExperimentUser =
     casePrefix &&
-    newBannerPrefixes.includes(casePrefix);
+    experimentPrefixes.includes(casePrefix);
 
   // ---------- AUTO SLOT USERS ----------
   const isAutoSlotMaleUser = isMale;
@@ -54,13 +60,6 @@ function Attribution() {
 
   const isAutoSlotUser = isAutoSlotMaleUser || isFemaleAutoSlotUser;
 
-  // Dev: 'https://public-zxhj2.dev.hav-g.in/',
-  // DEV: 'https://api.dev.hav-g.in/', 
-  // DEV:{ "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d" }, 
-
-  // PROD: 'https://public-jgfas325.hav-g.in/' 
-  // PROD: 'https://api.hav-g.in/' } 
-  // PROD: { "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90" } }
   // ---------- EVENTS ----------
   function fireSlotEvent(eventName, caseID, referrer = "") {
     fetch("https://public-jgfas325.hav-g.in/eventMoengageWeb", {
@@ -102,7 +101,7 @@ function Attribution() {
 
         const slotsData = await slotsResponse.json();
         const availableSlot = slotsData.find(s => s.slots?.count >= 1);
-
+ 
         if (!availableSlot) return;
 
         const bookingPayload = {
@@ -129,6 +128,7 @@ function Attribution() {
     autoBookSlot();
   }, [isAutoSlotUser, caseId]);
 
+  // ---------- ORDER EVENT ----------
   useEffect(() => {
     if (!caseId || gender !== "male") return;
     if (orderEventFired.current) return;
@@ -141,37 +141,31 @@ function Attribution() {
     fireSlotEvent("order_placed", caseId, previousUrl);
 
   }, [caseId, gender]);
+
   const isUnknownUser =
-  !gender &&
-  !caseId &&
-  !hairStage;
-  // ---------- BANNERS / LINKS ----------
-  const DEFAULT_AUTO_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/male_experiment1v2.webp?v=1773218398";
-  const FEMALE_AUTO_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/male_experiment1.webp?v=1772517436";
-  const NEW_EXPERIMENT_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/male-experiment2.webp?v=1772517413";
+    !gender &&
+    !caseId &&
+    !hairStage;
 
-  const FEMALE_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/slot-booking-female.webp?v=1766578030";
-    
+  // ---------- BANNERS ----------
+  const CONTROL_BANNER =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774444544";
+
+  const VARIATION_BANNER =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774444544";
+
   const FALLBACK_BANNER =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
 
+  // ✅ FINAL BANNER LOGIC
   const autoSlotBanner =
     isUnknownUser
       ? FALLBACK_BANNER
-      : isNewBannerExperimentUser
-      ? NEW_EXPERIMENT_BANNER
-      : isFemaleAutoSlotUser
-      ? FEMALE_AUTO_BANNER
-      : isAutoSlotMaleUser
-      ? DEFAULT_AUTO_BANNER
-      : gender === "female"
-      ? FEMALE_BANNER
-      : banner_image;
+      : isExperimentUser
+      ? VARIATION_BANNER
+      : CONTROL_BANNER;
 
+  // ---------- LINKS ----------
   const autoSlotLink =
     isUnknownUser
       ? "https://trayahealth.app.link/xT3UrtZDvyb"
@@ -181,20 +175,11 @@ function Attribution() {
       ? `https://form.traya.health/pages/reschedule-slot/${caseId}?orderPlatform=shopify`
       : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
-  const clickEventName =
-    isNewBannerExperimentUser
-      ? "webshopify_goto_app_now_click"
-      : "webshopify_goto_app_now_click";
-
-  const downloadBanner =
-    gender === "female"
-      ? "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635"
-      : "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
+  const clickEventName = "webshopify_goto_app_now_click";
 
   // ---------- UI ----------
   return (
     <>
-      {/* AUTO SLOT BANNER (ALL MALE + FEMALE AUTO) */}
       <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
         <InlineLayout columns="fill">
           <Pressable
@@ -211,17 +196,6 @@ function Attribution() {
       </View>
 
       <BlockSpacer />
-
-      {/* DOWNLOAD */}
-      {/* {gender !== "male" && (
-        <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
-          <InlineLayout columns="fill">
-            <Pressable inlineAlignment="center" to="https://trayahealth.app.link/xT3UrtZDvyb">
-              <Image source={downloadBanner} loading="eager" fit="cover" />
-            </Pressable>
-          </InlineLayout>
-        </View>
-      )} */}
     </>
   );
 }

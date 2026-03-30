@@ -149,10 +149,10 @@ function Attribution() {
 
   // ---------- BANNERS ----------
   const CONTROL_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774444544";
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
 
   const VARIATION_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774444544";
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774875936";
 
   const FALLBACK_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";

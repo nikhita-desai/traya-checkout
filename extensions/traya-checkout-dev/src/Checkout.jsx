@@ -108,7 +108,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("56 version - reward coin changes");
+  console.log("58 version - reward coin changes");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();
@@ -234,7 +234,10 @@ function Extension() {
   useEffect(() => {
     if (addressAttemptedRef.current) return;
     const firstNameAttr = attributes.find((a) => a.key === "first_name");
-    if (!firstNameAttr) return;
+    const phoneAttr = attributes.find((a) => a.key === "phone");
+
+    if (!firstNameAttr && !phoneAttr) return;
+
     let address = {};
     if (firstNameAttr?.value) {
       const [firstName, ...lastNameParts] = firstNameAttr.value.split(" ");
@@ -242,6 +245,12 @@ function Extension() {
       if (lastNameParts.length) {
         address.lastName = lastNameParts.join(" ");
       }
+    }
+
+    if (phoneAttr?.value) {
+      const formatted = formatPhone(phoneAttr.value);
+      address.phone = formatted;
+      address.countryCode = formatted.length === 10 ? "IN" : "AE";
     }
 
     if (Object.keys(address).length) {

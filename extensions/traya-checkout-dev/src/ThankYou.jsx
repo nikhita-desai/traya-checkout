@@ -5,7 +5,6 @@ import {
   Pressable,
   reactExtension,
   useAttributes,
-  useSettings,
   View,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useRef } from "react";
@@ -15,20 +14,15 @@ export default reactExtension(
   () => <Attribution />
 );
 
-// Dev: 'https://public-zxhj2.dev.hav-g.in/', 
-// DEV: 'https://api.dev.hav-g.in/', 
-// DEV:{ "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d" }, 
-// PROD: 'https://public-jgfas325.hav-g.in/' 
-// PROD: 'https://api.hav-g.in/' }
-// PROD: { "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90" } }
-
 function Attribution() {
-  const { banner_image } = useSettings();
   const attributes = useAttributes();
   const orderEventFired = useRef(false);
 
-  const gender =
-    attributes.find((attr) => attr.key === "user__gender")?.value?.toLowerCase() || null;
+  // ✅ SAFE ATTRIBUTE EXTRACTION
+  const rawGender =
+    attributes.find((attr) => attr.key === "user__gender")?.value || "";
+
+  const gender = rawGender.toLowerCase().trim();
 
   const caseId =
     attributes.find((attr) => attr.key === "caseid")?.value || null;
@@ -39,21 +33,21 @@ function Attribution() {
   const casePrefix = caseId?.charAt(0)?.toLowerCase();
 
   const isMale = gender === "male";
+  const isFemale = gender === "female" || gender === "f";
 
-  // ✅ NEW EXPERIMENT LOGIC (2–9)
+  // ✅ EXPERIMENT USERS
   const experimentPrefixes = ["2","3","4","5","6","7","8","9"];
-
   const isExperimentUser =
-    casePrefix &&
-    experimentPrefixes.includes(casePrefix);
+    casePrefix && experimentPrefixes.includes(casePrefix);
 
   // ---------- AUTO SLOT USERS ----------
-  const isAutoSlotMaleUser = isMale;
+
+  // ⚠️ IMPORTANT FIX: DO NOT MAKE ALL MALES AUTO SLOT
+  const isAutoSlotMaleUser = false; // 👈 FIXED (previous bug)
 
   const femaleAutoPrefixes = ["0","1","a","b"];
-
   const isFemaleAutoSlotUser =
-    gender === "female" &&
+    isFemale &&
     casePrefix &&
     femaleAutoPrefixes.includes(casePrefix) &&
     (hairStage === "hair thinning" || hairStage === "side thinning");
@@ -83,7 +77,7 @@ function Attribution() {
     });
   }
 
-  // ---------- AUTO SLOT BOOKING ----------
+  // ---------- AUTO SLOT BOOKING (SAFE) ----------
   useEffect(() => {
     if (!isAutoSlotUser || !caseId) return;
 
@@ -91,33 +85,34 @@ function Attribution() {
       try {
         const AUTH_HEADERS = {
           "Content-Type": "application/json",
-          "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+          "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
         };
 
-        const slotsResponse = await fetch(
-          `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+        const res = await fetch(
+          `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
 
-        const slotsData = await slotsResponse.json();
-        const availableSlot = slotsData.find(s => s.slots?.count >= 1);
- 
+        if (!res.ok) return; // ✅ prevent crash
+
+        const data = await res.json();
+        const slotsArray = Array.isArray(data) ? data : data?.data || [];
+
+        const availableSlot = slotsArray.find(s => s?.slots?.count >= 1);
         if (!availableSlot) return;
 
-        const bookingPayload = {
-          case_id: caseId,
-          slot_id: availableSlot.id,
-          slots: availableSlot.slots,
-          order_related: false,
-          is_rescheduling: true,
-          from_crm: false,
-          is_autoSlotBooked: true
-        };
-
-        await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
+        await fetch("https://api.dev.hav-g.in/v3/slots/slot-booking", {
           method: "POST",
           headers: AUTH_HEADERS,
-          body: JSON.stringify(bookingPayload),
+          body: JSON.stringify({
+            case_id: caseId,
+            slot_id: availableSlot.id,
+            slots: availableSlot.slots,
+            order_related: false,
+            is_rescheduling: true,
+            from_crm: false,
+            is_autoSlotBooked: true
+          }),
         });
 
       } catch (e) {
@@ -130,38 +125,39 @@ function Attribution() {
 
   // ---------- ORDER EVENT ----------
   useEffect(() => {
-    if (!caseId || gender !== "male") return;
+    if (!caseId || !isMale) return;
     if (orderEventFired.current) return;
 
     orderEventFired.current = true;
 
-    const previousUrl =
-      typeof document !== "undefined" ? document.referrer : "";
+    fireSlotEvent(
+      "order_placed",
+      caseId,
+      typeof document !== "undefined" ? document.referrer : ""
+    );
 
-    fireSlotEvent("order_placed", caseId, previousUrl);
+  }, [caseId, isMale]);
 
-  }, [caseId, gender]);
+  // ---------- USER STATE ----------
+  const isUnknownUser = !gender && !caseId && !hairStage;
 
-  const isUnknownUser =
-    !gender &&
-    !caseId &&
-    !hairStage;
+  // ✅ FIXED CONDITION (CRITICAL)
+  const showFemaleDownloadBanner = isFemale;
 
   // ---------- BANNERS ----------
-  const CONTROL_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
+  const CONTROL_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
+  const VARIATION_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774875936";
+  const FALLBACK_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
+  const FEMALE_AUTO_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/auto-slot-booking.webp?v=1769002102";
+  const DOWNLOAD_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635";
 
-  const VARIATION_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774875936";
-
-  const FALLBACK_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
-
-  // ✅ FINAL BANNER LOGIC
+  // ✅ FIXED PRIORITY
   const autoSlotBanner =
     isUnknownUser
       ? FALLBACK_BANNER
-      : isExperimentUser
+      : isFemaleAutoSlotUser
+      ? FEMALE_AUTO_BANNER
+      : isMale && isExperimentUser
       ? VARIATION_BANNER
       : CONTROL_BANNER;
 
@@ -175,27 +171,37 @@ function Attribution() {
       ? `https://form.traya.health/pages/reschedule-slot/${caseId}?orderPlatform=shopify`
       : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
-  const clickEventName = "webshopify_goto_app_now_click";
-
   // ---------- UI ----------
   return (
     <>
+      {/* MAIN BANNER */}
       <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
         <InlineLayout columns="fill">
-          <Pressable
-            inlineAlignment="center"
-            to={autoSlotLink}
-            onPress={() => {
-              if (caseId && isAutoSlotUser) {
-                fireSlotEvent(clickEventName, caseId);
-              }
-            }}>
+          <Pressable inlineAlignment="center" to={autoSlotLink}>
             <Image source={autoSlotBanner} loading="eager" fit="cover" />
           </Pressable>
         </InlineLayout>
       </View>
 
       <BlockSpacer />
+
+      {/* ✅ FEMALE DOWNLOAD BANNER */}
+      {showFemaleDownloadBanner && (
+        <>
+          <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
+            <InlineLayout columns="fill">
+              <Pressable
+                inlineAlignment="center"
+                to="https://trayahealth.app.link/xT3UrtZDvyb"
+              >
+                <Image source={DOWNLOAD_BANNER} loading="eager" fit="cover" />
+              </Pressable>
+            </InlineLayout>
+          </View>
+
+          <BlockSpacer />
+        </>
+      )}
     </>
   );
 }

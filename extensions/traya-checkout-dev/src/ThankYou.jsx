@@ -85,11 +85,11 @@ function Attribution() {
       try {
         const AUTH_HEADERS = {
           "Content-Type": "application/json",
-          "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+          "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
         };
 
         const res = await fetch(
-          `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+          `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
 
@@ -101,7 +101,7 @@ function Attribution() {
         const availableSlot = slotsArray.find(s => s?.slots?.count >= 1);
         if (!availableSlot) return;
 
-        await fetch("https://api.dev.hav-g.in/v3/slots/slot-booking", {
+        await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
           method: "POST",
           headers: AUTH_HEADERS,
           body: JSON.stringify({

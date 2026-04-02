@@ -108,7 +108,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("58 version - reward coin changes");
+  console.log("61 version - reward coin changes");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();

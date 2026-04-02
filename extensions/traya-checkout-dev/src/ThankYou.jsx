@@ -14,11 +14,16 @@ export default reactExtension(
   () => <Attribution />
 );
 
+// Dev: 'https://public-zxhj2.dev.hav-g.in/', 
+// DEV: 'https://api.dev.hav-g.in/', 
+// DEV:{ "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d" }, 
+// PROD: 'https://public-jgfas325.hav-g.in/' 
+// PROD: 'https://api.hav-g.in/' }
+// PROD: { "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90" } }
+
 function Attribution() {
   const attributes = useAttributes();
   const orderEventFired = useRef(false);
-
-  // ✅ SAFE ATTRIBUTE EXTRACTION
   const rawGender =
     attributes.find((attr) => attr.key === "user__gender")?.value || "";
 
@@ -34,16 +39,12 @@ function Attribution() {
 
   const isMale = gender === "male";
   const isFemale = gender === "female" || gender === "f";
-
-  // ✅ EXPERIMENT USERS
   const experimentPrefixes = ["2","3","4","5","6","7","8","9"];
   const isExperimentUser =
     casePrefix && experimentPrefixes.includes(casePrefix);
 
   // ---------- AUTO SLOT USERS ----------
-
-  // ⚠️ IMPORTANT FIX: DO NOT MAKE ALL MALES AUTO SLOT
-  const isAutoSlotMaleUser = false; // 👈 FIXED (previous bug)
+  const isAutoSlotMaleUser = false; 
 
   const femaleAutoPrefixes = ["0","1","a","b"];
   const isFemaleAutoSlotUser =
@@ -60,7 +61,7 @@ function Attribution() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90"
+        "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d"
       },
       body: JSON.stringify({
         eventName,
@@ -89,11 +90,11 @@ function Attribution() {
         };
 
         const res = await fetch(
-          `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+          `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
 
-        if (!res.ok) return; // ✅ prevent crash
+        if (!res.ok) return; 
 
         const data = await res.json();
         const slotsArray = Array.isArray(data) ? data : data?.data || [];
@@ -101,7 +102,7 @@ function Attribution() {
         const availableSlot = slotsArray.find(s => s?.slots?.count >= 1);
         if (!availableSlot) return;
 
-        await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
+        await fetch("https://api.dev.hav-g.in/v3/slots/slot-booking", {
           method: "POST",
           headers: AUTH_HEADERS,
           body: JSON.stringify({
@@ -140,18 +141,15 @@ function Attribution() {
 
   // ---------- USER STATE ----------
   const isUnknownUser = !gender && !caseId && !hairStage;
-
-  // ✅ FIXED CONDITION (CRITICAL)
-  const showFemaleDownloadBanner = isFemale;
+  const showFemaleDownloadBanner = isFemale && !isFemaleAutoSlotUser;
 
   // ---------- BANNERS ----------
   const CONTROL_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
   const VARIATION_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774875936";
   const FALLBACK_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
-  const FEMALE_AUTO_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/auto-slot-booking.webp?v=1769002102";
+  const FEMALE_AUTO_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/female_coin_auto_slot_banner.webp?v=1775129771";
   const DOWNLOAD_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635";
 
-  // ✅ FIXED PRIORITY
   const autoSlotBanner =
     isUnknownUser
       ? FALLBACK_BANNER
@@ -185,7 +183,6 @@ function Attribution() {
 
       <BlockSpacer />
 
-      {/* ✅ FEMALE DOWNLOAD BANNER */}
       {showFemaleDownloadBanner && (
         <>
           <View inlineSize="fill" background="subdued" border="base" borderRadius="base">

@@ -17,8 +17,6 @@ export default reactExtension(
 function Attribution() {
   const attributes = useAttributes();
   const orderEventFired = useRef(false);
-
-  // ✅ SAFE ATTRIBUTE EXTRACTION
   const rawGender =
     attributes.find((attr) => attr.key === "user__gender")?.value || "";
 
@@ -34,17 +32,12 @@ function Attribution() {
 
   const isMale = gender === "male";
   const isFemale = gender === "female" || gender === "f";
-
-  // ✅ EXPERIMENT USERS
   const experimentPrefixes = ["2","3","4","5","6","7","8","9"];
   const isExperimentUser =
     casePrefix && experimentPrefixes.includes(casePrefix);
 
   // ---------- AUTO SLOT USERS ----------
-
-  // ⚠️ IMPORTANT FIX: DO NOT MAKE ALL MALES AUTO SLOT
-  const isAutoSlotMaleUser = false; // 👈 FIXED (previous bug)
-
+  const isAutoSlotMaleUser = isMale && !!caseId;
   const femaleAutoPrefixes = ["0","1","a","b"];
   const isFemaleAutoSlotUser =
     isFemale &&
@@ -93,7 +86,7 @@ function Attribution() {
           { method: "GET", headers: AUTH_HEADERS }
         );
 
-        if (!res.ok) return; // ✅ prevent crash
+        if (!res.ok) return;
 
         const data = await res.json();
         const slotsArray = Array.isArray(data) ? data : data?.data || [];
@@ -140,8 +133,6 @@ function Attribution() {
 
   // ---------- USER STATE ----------
   const isUnknownUser = !gender && !caseId && !hairStage;
-
-  // ✅ FIXED CONDITION (CRITICAL)
   const showFemaleDownloadBanner = isFemale;
 
   // ---------- BANNERS ----------
@@ -150,8 +141,6 @@ function Attribution() {
   const FALLBACK_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
   const FEMALE_AUTO_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/auto-slot-booking.webp?v=1769002102";
   const DOWNLOAD_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635";
-
-  // ✅ FIXED PRIORITY
   const autoSlotBanner =
     isUnknownUser
       ? FALLBACK_BANNER
@@ -174,7 +163,6 @@ function Attribution() {
   // ---------- UI ----------
   return (
     <>
-      {/* MAIN BANNER */}
       <View inlineSize="fill" background="subdued" border="base" borderRadius="base">
         <InlineLayout columns="fill">
           <Pressable inlineAlignment="center" to={autoSlotLink}>
@@ -184,8 +172,7 @@ function Attribution() {
       </View>
 
       <BlockSpacer />
-
-      {/* ✅ FEMALE DOWNLOAD BANNER */}
+      
       {showFemaleDownloadBanner && (
         <>
           <View inlineSize="fill" background="subdued" border="base" borderRadius="base">

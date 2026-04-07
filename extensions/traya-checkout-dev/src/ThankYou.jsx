@@ -133,20 +133,23 @@ function Attribution() {
 
   // ---------- USER STATE ----------
   const isUnknownUser = !gender && !caseId && !hairStage;
-  const showFemaleDownloadBanner = isFemale;
+  const showFemaleDownloadBanner = isFemale && !isFemaleAutoSlotUser;
 
   // ---------- BANNERS ----------
   const CONTROL_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
   const VARIATION_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/variation-banner.webp?v=1774875936";
   const FALLBACK_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Group_102353309_1.png";
-  const FEMALE_AUTO_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/auto-slot-booking.webp?v=1769002102";
+  const FEMALE_DEFAULT_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/auto-slot-booking.webp?v=1769002102";
+  const FEMALE_AUTO_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/female_coin_auto_slot_banner.webp?v=1775129771";
   const DOWNLOAD_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635";
   const autoSlotBanner =
     isUnknownUser
       ? FALLBACK_BANNER
       : isFemaleAutoSlotUser
       ? FEMALE_AUTO_BANNER
-      : isMale && isExperimentUser
+      : isFemale
+      ? FEMALE_DEFAULT_BANNER
+      : isMale && !isAutoSlotUser && isExperimentUser
       ? VARIATION_BANNER
       : CONTROL_BANNER;
 

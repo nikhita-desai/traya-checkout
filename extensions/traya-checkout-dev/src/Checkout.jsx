@@ -50,20 +50,17 @@ const validateAddress = (address) => {
       message: "Please enter a complete address",
       target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
     });
-  } 
-  else if (!/[a-zA-Z]/.test(addr1)) {
+  } else if (!/[a-zA-Z]/.test(addr1)) {
     errors.push({
       message: "Please enter a valid address (street or area name required)",
       target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
     });
-  }
-  else if (!containsOnlyPrintableASCII(addr1)) {
+  } else if (!containsOnlyPrintableASCII(addr1)) {
     errors.push({
       message: "Address contains invalid characters",
       target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
     });
-  }
-  else if (hasRepeatedSpecialCharacters(addr1)) {
+  } else if (hasRepeatedSpecialCharacters(addr1)) {
     errors.push({
       message: "Address contains invalid repeated characters",
       target: "$.cart.deliveryGroups[0].deliveryAddress.address1",
@@ -108,7 +105,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("62 version - reward coin changes");
+  console.log("64 version - reward coin changes");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();
@@ -264,6 +261,20 @@ function Extension() {
   /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };
+
+    /* ---- Block if cart total is 0 ---- */
+    if (cartTotal <= 0) {
+      return {
+        behavior: "block",
+        reason: "zero_cart_value",
+        errors: [
+          {
+            message:
+              "Minimum order value not met. Please add items to proceed",
+          },
+        ],
+      };
+    }
 
     const phoneRegex = /^(?:\+91)?[6789][0-9]{9}$/;
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,12}$/i;

@@ -17,74 +17,8 @@ export default reactExtension(
   () => <Attribution />
 );
 
-/* ------------------------------------------------------------------ *
- * Rs.50 APP-INSTALL EXPERIMENT — config
- * ------------------------------------------------------------------ *
- * The "10 minutes" is URGENCY ONLY. Real reward eligibility is the
- * D0–D2 window, enforced server-side / in the app (and reversed on
- * order cancellation). Do NOT gate anything on this countdown.
- * ------------------------------------------------------------------ */
-
-// Set true ONLY if you must show a ticking timer. If true, export the
-// banner image WITHOUT the timer text (the native line below replaces it).
-// If false (recommended), bake "Offer ends in 10 mins" into the image.
-const ENABLE_LIVE_TIMER = false;
-
-const OFFER_WINDOW_SECONDS = 10 * 60;
-
-// TODO: replace with the exported Figma card (full Rs.50 + onboarding card).
-const RS50_BANNER =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/REPLACE_rs50_card.webp";
-
-// TODO: replace with the app-install deep link for this experiment
-// (Branch handles OS routing + deferred deep link into the bottom sheet).
-const RS50_APP_LINK = "https://trayahealth.app.link/REPLACE_INSTALL_LINK";
-
-/* Live countdown anchored to a per-buyer start time held in extension
- * storage, so a reload/revisit resumes the same countdown instead of
- * restarting. Storage here is fine: it's only ever read back on this page. */
-function useOfferCountdown(caseId, enabled) {
-  const storage = useStorage();
-  const [secondsLeft, setSecondsLeft] = useState(null);
-
-  useEffect(() => {
-    if (!enabled || !caseId) return;
-    let intervalId;
-    const key = `rs50_offer_start_${caseId}`;
-
-    (async () => {
-      let start = null;
-      try {
-        start = await storage.read(key);
-      } catch {
-        start = null;
-      }
-      if (!start) {
-        start = Date.now();
-        try {
-          await storage.write(key, start);
-        } catch {}
-      }
-      const tick = () => {
-        const elapsed = Math.floor((Date.now() - start) / 1000);
-        setSecondsLeft(Math.max(0, OFFER_WINDOW_SECONDS - elapsed));
-      };
-      tick();
-      intervalId = setInterval(tick, 1000);
-    })();
-
-    return () => clearInterval(intervalId);
-  }, [enabled, caseId]);
-
-  return secondsLeft;
-}
-
-function formatOffer(secondsLeft) {
-  if (secondsLeft == null) return "10 min 0 secs";
-  const m = Math.floor(secondsLeft / 60);
-  const s = secondsLeft % 60;
-  return `${m} min ${s} secs`;
-}
+const RS50_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Background_Border.webp?v=1782299412";
+const RS50_APP_LINK = "https://trayahealth.app.link/d0fLh8aweEb";
 
 function Attribution() {
   const attributes = useAttributes();
@@ -110,16 +44,9 @@ function Attribution() {
     casePrefix && experimentPrefixes.includes(casePrefix);
 
   // ---------- Rs.50 APP-INSTALL EXPERIMENT (MALE, O1, web_shopify) ----------
-  // Experiment group: caseId prefix 0,1,a–f  -> new Rs.50 card (this banner)
-  // Control group:    caseId prefix 2–9      -> existing banner (unchanged)
-  // NOTE: "O1 / first order" is NOT verifiable from thank-you attributes.
-  // Either pass an `order_type` cart attribute at order creation, or rely on
-  // the app's eligibility check (it must verify O1 anyway for the reversal case).
   const rs50ExpPrefixes = ["0", "1", "a", "b", "c", "d", "e", "f"];
   const isRs50Experiment =
     isMale && !!caseId && !!casePrefix && rs50ExpPrefixes.includes(casePrefix);
-
-  const offerSecondsLeft = useOfferCountdown(caseId, isRs50Experiment);
 
   // ---------- AUTO SLOT USERS ----------
   const isAutoSlotMaleUser = isMale && !!caseId;
@@ -167,22 +94,36 @@ function Attribution() {
 
     const autoBookSlot = async () => {
       try {
+        // PROD Start
         const AUTH_HEADERS = {
           "Content-Type": "application/json",
-          Authorization: "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+          "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
         };
 
         const res = await fetch(
           `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
+        // PROD End
+
+        // DEV Start
+        // const AUTH_HEADERS = {
+        //   "Content-Type": "application/json",
+        //   "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+        // };
+
+        // const res = await fetch(
+        //   `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+        //   { method: "GET", headers: AUTH_HEADERS }
+        // );
+        // DEV End
 
         if (!res.ok) return;
 
         const data = await res.json();
         const slotsArray = Array.isArray(data) ? data : data?.data || [];
 
-        const availableSlot = slotsArray.find((s) => s?.slots?.count >= 1);
+        const availableSlot = slotsArray.find((s) => s?.slots?.count >= 1); 
         if (!availableSlot) return;
 
         await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
@@ -195,7 +136,7 @@ function Attribution() {
             order_related: false,
             is_rescheduling: true,
             from_crm: false,
-            is_autoSlotBooked: true,
+            is_autoSlotBooked: true, 
           }),
         });
       } catch (e) {
@@ -258,29 +199,16 @@ function Attribution() {
   // ---------- UI ----------
   return (
     <>
+      {/* <BlockSpacer /> */}
+
       {isRs50Experiment ? (
         // -------- EXPERIMENT GROUP: Rs.50 app-install card --------
         <View
           inlineSize="fill"
           background="subdued"
           border="base"
-          borderRadius="base"
-        >
-          <BlockStack spacing="none">
-            {ENABLE_LIVE_TIMER && (
-              // Native ticking line. NOTE: uses checkout's font + token colors,
-              // so it will NOT match Nunito Sans / #A0393B. If you enable this,
-              // export RS50_BANNER WITHOUT the baked-in timer text.
-              <View padding="tight" inlineAlignment="center">
-                <Text size="small" emphasis="bold">
-                  Offer ends in{" "}
-                  <Text appearance="critical" emphasis="bold">
-                    {formatOffer(offerSecondsLeft)}
-                  </Text>
-                </Text>
-              </View>
-            )}
-
+          borderRadius="base">
+          <BlockStack spacing="none">        
             <InlineLayout columns="fill">
               <Pressable inlineAlignment="center" to={RS50_APP_LINK}>
                 <Image source={RS50_BANNER} loading="eager" fit="cover" />

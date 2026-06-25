@@ -95,6 +95,12 @@ name = "Pincodes"
 description = "Enter Pincodes"
 
 [[extensions.settings.fields]]
+key = "pincode8"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
 key = "phone_numbers"
 type = "multi_line_text_field"
 name = "Phone Numbers"

@@ -10,6 +10,7 @@ import {
   View,
   reactExtension,
   useAttributes,
+  useSettings,
   useStorage,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useRef, useState } from "react";
@@ -20,38 +21,30 @@ export default reactExtension(
 );
 
 // ---------- SPIN-THE-WHEEL ASSETS ----------
-// FEMALE assets (current — green wheel)
 const SPIN_WHEEL_STATIC_FEMALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Wheel.png?v=1782819093";
+  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_4_ade8e422-7242-48bd-88bd-de85555f98d0.png?v=1782970804";
 const SPIN_WHEEL_GIF_FEMALE =
   "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_terracotta_1.gif?v=1782911559";
 const SPIN_WHEEL_REWARD_FEMALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Rectangle_34629420.png?v=1782819093";
+  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_3_a113b5c8-c0d4-4b12-a7bd-897860920e40.png?v=1782970804";
 
-// MALE assets — TODO: upload male versions and replace these URLs
 const SPIN_WHEEL_STATIC_MALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231224_2.png?v=1782910564"; // TODO: male static
+  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231224_2.png?v=1782910564";
 const SPIN_WHEEL_GIF_MALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_500.gif?v=1782910564"; // TODO: male gif
+  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_500.gif?v=1782910564";
 const SPIN_WHEEL_REWARD_MALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231225_1.png?v=1782911765"; // TODO: male reward
+  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231225_1.png?v=1782911765";
 
 const THANKYOU_VIDEO_LINK = "https://trayahealth.app.link/d0fLh8aweEb";
-
-// How long the GIF plays before swapping to the reward image (ms).
 const SPIN_DURATION_MS = 3000;
-
-// Case-id prefixes eligible for the spin wheel
-const SPIN_WHEEL_PREFIXES = ["1", "2","a", "b", "c", "d", "e", "f"];
+const SPIN_WHEEL_PREFIXES = ["1", "2", "a", "b", "c", "d", "e", "f"];
 
 function Attribution() {
   const attributes = useAttributes();
+  const settings = useSettings();
   const orderEventFired = useRef(false);
-
-  // 'idle'    -> static wheel (whole image is tappable)
-  // 'spinning'-> animated GIF playing
-  // 'won'     -> reward image + Download App Now (whole image is tappable)
-  const [spinState, setSpinState] = useState("idle");
+  const [spinState, setSpinState] = useState("idle"); 
+  const spinWheelEnabled = settings?.enable_spin_wheel !== false;
 
   const rawGender =
     attributes.find((attr) => attr.key === "user__gender")?.value || "";
@@ -71,7 +64,6 @@ function Attribution() {
   const isExperimentUser =
     casePrefix && experimentPrefixes.includes(casePrefix);
 
-  // ---------- AUTO SLOT USERS ----------
   const isAutoSlotMaleUser = isMale && !!caseId;
   const isFemaleAutoSlotUser = isFemale && !!caseId;
 
@@ -87,31 +79,25 @@ function Attribution() {
   const isFemaleDefaultBanner =
     isFemale && !!casePrefix && femaleDefaultPrefixes.includes(casePrefix);
 
-  // ---------- SPIN-THE-WHEEL AUDIENCE ----------
-  // Both male AND female users whose caseId starts with a, b, c, d, e, or f.
   const showSpinWheel =
+    spinWheelEnabled &&
     (isMale || isFemale) &&
     !!caseId &&
     !!casePrefix &&
     SPIN_WHEEL_PREFIXES.includes(casePrefix);
 
-  // ---------- GENDER-SPECIFIC ASSETS ----------
   const SPIN_WHEEL_STATIC = isMale ? SPIN_WHEEL_STATIC_MALE : SPIN_WHEEL_STATIC_FEMALE;
   const SPIN_WHEEL_GIF = isMale ? SPIN_WHEEL_GIF_MALE : SPIN_WHEEL_GIF_FEMALE;
   const SPIN_WHEEL_REWARD = isMale ? SPIN_WHEEL_REWARD_MALE : SPIN_WHEEL_REWARD_FEMALE;
 
   console.log("[SpinWheel DEBUG]", {
-    gender,
-    caseId,
-    casePrefix,
-    isMale,
-    isFemale,
-    showSpinWheel,
+    spinWheelEnabled,          // ← new
+    gender, caseId, casePrefix,
+    isMale, isFemale, showSpinWheel,
     allAttributes: attributes.map(a => ({ key: a.key, value: a.value })),
   });
-
-  // ---------- EVENTS ----------
-  function fireSlotEvent(eventName, caseID, referrer = "") {
+ 
+  function fireSlotEvent(eventName, caseID, referrer = "", extraAttributes = {}) {
     fetch("https://public-jgfas325.hav-g.in/eventMoengageWeb", {
       method: "POST",
       headers: {
@@ -126,6 +112,7 @@ function Attribution() {
             domain: "traya.health",
             language: "English",
             previous_page: referrer,
+            ...extraAttributes,
           },
         },
         caseId: caseID,
@@ -133,18 +120,19 @@ function Attribution() {
     });
   }
 
-  // ---------- SPIN HANDLER ----------
   const handleSpin = () => {
     if (spinState !== "idle") return;
+
+    fireSlotEvent("app_component_item_clicked", caseId, "", {
+      component: "spin_the_wheel_web",
+    });
+
     setSpinState("spinning");
-    fireSlotEvent("spin_wheel_clicked", caseId, "");
     setTimeout(() => {
       setSpinState("won");
-      fireSlotEvent("spin_wheel_reward_shown", caseId, "");
     }, SPIN_DURATION_MS);
   };
 
-  // ---------- AUTO SLOT BOOKING ----------
   useEffect(() => {
     if (!isAutoSlotUser || !caseId) return;
     const autoBookSlot = async () => {
@@ -183,7 +171,6 @@ function Attribution() {
     autoBookSlot();
   }, [isAutoSlotUser, caseId]);
 
-  // ---------- ORDER EVENT ----------
   useEffect(() => {
     if (!caseId || !isMale) return;
     if (orderEventFired.current) return;
@@ -191,12 +178,10 @@ function Attribution() {
     fireSlotEvent("order_placed", caseId, "");
   }, [caseId, isMale]);
 
-  // ---------- USER STATE ----------
   const isUnknownUser = !gender && !caseId && !hairStage;
   const showFemaleDownloadBanner =
     isFemale && !isFemaleAutoSlotUser && !isFemaleDefaultBanner;
 
-  // ---------- BANNERS ----------
   const CONTROL_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
   const VARIATION_BANNER =
@@ -216,7 +201,6 @@ function Attribution() {
     ? VARIATION_BANNER
     : CONTROL_BANNER;
 
-  // ---------- LINKS ----------
   const SPECIAL_CASE_ID = "e6145b3a-3ab1-4653-ba3c-2a71a87169ca";
   const autoSlotLink =
     caseId === SPECIAL_CASE_ID
@@ -229,23 +213,27 @@ function Attribution() {
       ? `https://form.traya.health/pages/reschedule-slot/${caseId}?orderPlatform=shopify`
       : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
-  // ---------- SPIN-WHEEL UI ----------
-  const renderSpinWheel = () => {
-    // STATE 3: WON — full reward image is tappable, opens app
+  // ---------- SPIN-WHEEL CONTENT (rendered inside Modal) ----------
+  const renderSpinWheelContent = () => {
     if (spinState === "won") {
       return (
-        <Pressable to={THANKYOU_VIDEO_LINK}>
+        <Pressable 
+          onPress={() => {
+            fireSlotEvent("app_component_item_clicked", caseId, "", {
+              component: "spin_the_wheel_web_download",
+            });
+          }}
+          to={THANKYOU_VIDEO_LINK}>
           <Image
             source={SPIN_WHEEL_REWARD}
             loading="eager"
             fit="contain"
             accessibilityDescription="You won 500 coins — download the app to claim"
           />
-        </Pressable>
+        </Pressable> 
       );
     }
 
-    // STATE 2: SPINNING — GIF is shown, not tappable
     if (spinState === "spinning") {
       return (
         <Image
@@ -257,7 +245,6 @@ function Attribution() {
       );
     }
 
-    // STATE 1: IDLE — full static wheel image (with baked-in button) is tappable
     return (
       <Pressable onPress={handleSpin}>
         <Image
@@ -270,11 +257,27 @@ function Attribution() {
     );
   };
 
+  // ---------- SPIN-WHEEL BUTTON + MODAL ----------
+  const renderSpinWheelTrigger = () => (
+   <Button
+      kind="primary"
+      appearance="monochrome"
+      expand
+      overlay={
+        <Modal padding>
+          {renderSpinWheelContent()}
+        </Modal>
+      }
+    >
+      Spin The Wheel Win up to 500 coins
+    </Button>
+  );
+
   // ---------- UI ----------
   return (
     <>
       {showSpinWheel ? (
-        renderSpinWheel()
+        renderSpinWheelTrigger()
       ) : (
         <View
           inlineSize="fill"

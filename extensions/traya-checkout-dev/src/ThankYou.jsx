@@ -98,17 +98,17 @@ function Attribution() {
   });
  
   function fireSlotEvent(eventName, caseID, referrer = "", extraAttributes = {}) {
-    fetch("https://public-jgfas325.hav-g.in/eventMoengageWeb", {
+    fetch("https://public-zxhj2.dev.hav-g.in/eventMoengageWeb", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+        Authorization: "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
       },
       body: JSON.stringify({
         eventName,
         eventAttributes: {
           generalAttributes: {
-            platform: "web_shopify",
+            platform: "web_shopify", 
             domain: "traya.health",
             language: "English",
             previous_page: referrer,
@@ -120,12 +120,33 @@ function Attribution() {
     });
   }
 
+  async function recordSpinWheel(userJwt) {
+    const API_URL = "https://api.dev.hav-g.in/api/spin-wheel/record";
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${userJwt}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error("[SpinWheel] recordSpinWheel failed:", res.status);
+      console.error(await res.text());
+      return;
+    }
+
+    console.log(await res.json());
+  }
+  
   const handleSpin = () => {
     if (spinState !== "idle") return;
 
     fireSlotEvent("app_component_item_clicked", caseId, "", {
       component: "spin_the_wheel_web",
     });
+
+    recordSpinWheel(userJwt);  // ← ADD THIS LINE
 
     setSpinState("spinning");
     setTimeout(() => {
@@ -134,24 +155,39 @@ function Attribution() {
   };
 
   useEffect(() => {
-    if (!isAutoSlotUser || !caseId) return;
+    if (!isAutoSlotUser || !caseId) return; 
     const autoBookSlot = async () => {
       try {
+        // PROD Start
+        // const AUTH_HEADERS = {
+        //   "Content-Type": "application/json",
+        //   "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+        // };
+
+        // const res = await fetch(
+        //   `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+        //   { method: "GET", headers: AUTH_HEADERS }
+        // );
+        // PROD End
+
+        // DEV Start
         const AUTH_HEADERS = {
           "Content-Type": "application/json",
-          "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
+          "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
         };
+
         const res = await fetch(
-          `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+          `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
+        // DEV End
         if (!res.ok) return;
         const data = await res.json();
         const slotsArray = Array.isArray(data) ? data : data?.data || [];
         const availableSlot = slotsArray.find((s) => s?.slots?.count >= 1);
         if (!availableSlot) return;
 
-        await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
+        await fetch("https://api.dev.hav-g.in/v3/slots/slot-booking", {
           method: "POST",
           headers: AUTH_HEADERS,
           body: JSON.stringify({

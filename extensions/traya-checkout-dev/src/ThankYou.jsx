@@ -120,20 +120,22 @@ function Attribution() {
     });
   }
 
-  async function recordSpinWheel(userJwt) {
+  async function recordSpinWheel() {
     const API_URL = "https://api.dev.hav-g.in/api/spin-wheel/record";
 
     const res = await fetch(API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${userJwt}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d`,
       },
+      body: JSON.stringify({ caseId: caseId }),  
     });
 
     if (!res.ok) {
       console.error("[SpinWheel] recordSpinWheel failed:", res.status);
       console.error(await res.text());
-      return;
+      return; 
     }
 
     console.log(await res.json());
@@ -143,10 +145,10 @@ function Attribution() {
     if (spinState !== "idle") return;
 
     fireSlotEvent("app_component_item_clicked", caseId, "", {
-      component: "spin_the_wheel_web",
+      component: "spin_the_wheel_web", 
     });
 
-    recordSpinWheel(userJwt);  // ← ADD THIS LINE
+    recordSpinWheel();  
 
     setSpinState("spinning");
     setTimeout(() => {

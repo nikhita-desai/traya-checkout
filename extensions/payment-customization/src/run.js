@@ -5,7 +5,7 @@
  * @typedef {import("../generated/api").FunctionRunResult} FunctionRunResult
  */
 
-const PRIORITY = ["razorpay", "cod", "snapmint", "simpl"];
+const PRIORITY = ["cod", "razorpay", "snapmint", "simpl"];
 /**
  * @param {RunInput} input
  * @returns {FunctionRunResult}

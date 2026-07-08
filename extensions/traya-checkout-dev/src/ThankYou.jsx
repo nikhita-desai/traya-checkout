@@ -56,6 +56,10 @@ function Attribution() {
     "c", "d", "e", "f", "2", "3", "4", "5", "6", "7", "8", "9",
   ];
 
+  const male2to9Prefixes = ["2", "3", "4", "5", "6", "7", "8", "9"];
+   const isMale2to9 =
+  isMale && !!casePrefix && male2to9Prefixes.includes(casePrefix);
+
   const isAutoSlotUser = isAutoSlotMaleUser || isFemaleAutoSlotUser;
 
   // banner-only splits
@@ -173,11 +177,15 @@ function Attribution() {
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635";
   const FEMALE_NEW_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/new-banner-female-100.webp?v=1777361004";
+  const MALE_2_9_BANNER =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final.webp?v=1783498004"; 
 
   const autoSlotBanner = isUnknownUser
     ? FALLBACK_BANNER
-    : isFemale && !!caseId // all females with any caseId -> new banner
+    : isFemale && !!caseId
     ? FEMALE_NEW_BANNER
+    : isMale2to9
+    ? MALE_2_9_BANNER
     : isMale && !isAutoSlotUser && isExperimentUser
     ? VARIATION_BANNER
     : CONTROL_BANNER;

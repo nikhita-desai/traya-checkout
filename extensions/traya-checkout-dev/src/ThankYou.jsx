@@ -16,10 +16,7 @@ export default reactExtension(
   "purchase.thank-you.block.render",
   () => <Attribution />
 );
-
-const RS50_BANNER = "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Background_Border.webp?v=1782299412";
-const RS50_APP_LINK = "https://trayahealth.app.link/d0fLh8aweEb";
-
+  
 function Attribution() {
   const attributes = useAttributes();
   const orderEventFired = useRef(false);
@@ -57,9 +54,7 @@ function Attribution() {
   ];
 
   const male2to9Prefixes = ["2", "3", "4", "5", "6", "7", "8", "9"];
-   const isMale2to9 =
-  isMale && !!casePrefix && male2to9Prefixes.includes(casePrefix);
-
+  const isMale2to9 = isMale && !!casePrefix && male2to9Prefixes.includes(casePrefix);
   const isAutoSlotUser = isAutoSlotMaleUser || isFemaleAutoSlotUser;
 
   // banner-only splits
@@ -68,8 +63,37 @@ function Attribution() {
   const isFemaleDefaultBanner =
     isFemale && !!casePrefix && femaleDefaultPrefixes.includes(casePrefix);
 
-  // ---------- EVENTS ----------
-  function fireSlotEvent(eventName, caseID, referrer = "") {
+  // ---------- SPIN-THE-WHEEL ASSETS ----------
+  const SPIN_WHEEL_STATIC_FEMALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_4_ade8e422-7242-48bd-88bd-de85555f98d0.png?v=1782970804";
+  const SPIN_WHEEL_GIF_FEMALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_terracotta_1.gif?v=1782911559";
+  const SPIN_WHEEL_REWARD_FEMALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_3_a113b5c8-c0d4-4b12-a7bd-897860920e40.png?v=1782970804";
+
+  const SPIN_WHEEL_STATIC_MALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231224_2.png?v=1782910564";
+  const SPIN_WHEEL_GIF_MALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_500.gif?v=1782910564";
+  const SPIN_WHEEL_REWARD_MALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231225_1.png?v=1782911765";
+
+  const THANKYOU_VIDEO_LINK = "https://trayahealth.app.link/d0fLh8aweEb";
+  const SPIN_DURATION_MS = 3000; 
+  const SPIN_WHEEL_PREFIXES = ["1", "0", "a", "b", "c", "d", "e", "f"];
+
+  const showSpinWheel =
+    spinWheelEnabled &&
+    (isMale || isFemale) &&
+    !!caseId &&
+    !!casePrefix &&
+    SPIN_WHEEL_PREFIXES.includes(casePrefix);
+
+  const SPIN_WHEEL_STATIC = isMale ? SPIN_WHEEL_STATIC_MALE : SPIN_WHEEL_STATIC_FEMALE;
+  const SPIN_WHEEL_GIF = isMale ? SPIN_WHEEL_GIF_MALE : SPIN_WHEEL_GIF_FEMALE;
+  const SPIN_WHEEL_REWARD = isMale ? SPIN_WHEEL_REWARD_MALE : SPIN_WHEEL_REWARD_FEMALE;
+ 
+  function fireSlotEvent(eventName, caseID, referrer = "", extraAttributes = {}) {
     fetch("https://public-jgfas325.hav-g.in/eventMoengageWeb", {
       method: "POST",
       headers: {
@@ -91,8 +115,42 @@ function Attribution() {
     });
   }
 
-  // ---------- AUTO SLOT BOOKING (SAFE) ----------
-  // Unchanged: still books the onboarding call for all males w/ caseId.
+  async function recordSpinWheel() {
+    const API_URL = "https://api.hav-g.in/api/spin-wheel/record";
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90`,
+      },
+      body: JSON.stringify({ caseId: caseId }),  
+    });
+
+    if (!res.ok) {
+      console.error("[SpinWheel] recordSpinWheel failed:", res.status);
+      console.error(await res.text());
+      return; 
+    }
+
+    console.log(await res.json());
+  }
+  
+  const handleSpin = () => {
+    if (spinState !== "idle") return;
+
+    fireSlotEvent("app_component_item_clicked", caseId, "", {
+      component: "spin_the_wheel_web", 
+    });
+
+    recordSpinWheel();  
+
+    setSpinState("spinning");
+    setTimeout(() => {
+      setSpinState("won");
+    }, SPIN_DURATION_MS);
+  };
+
   useEffect(() => {
     if (!isAutoSlotUser || !caseId) return;
 
@@ -178,7 +236,7 @@ function Attribution() {
   const FEMALE_NEW_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/new-banner-female-100.webp?v=1777361004";
   const MALE_2_9_BANNER =
-    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final.webp?v=1783498004"; 
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final.webp?v=1783498004";
 
   const autoSlotBanner = isUnknownUser
     ? FALLBACK_BANNER
@@ -204,41 +262,86 @@ function Attribution() {
       ? `https://form.traya.health/pages/reschedule-slot/${caseId}?orderPlatform=shopify`
       : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
-  // ---------- UI ----------
+  // ---------- SPIN-WHEEL CONTENT (rendered inside Modal) ----------
+  const renderSpinWheelContent = () => {
+    if (spinState === "won") {
+      return (
+        <Pressable 
+          onPress={() => {
+            fireSlotEvent("app_component_item_clicked", caseId, "", {
+              component: "spin_the_wheel_web_download",
+            });
+          }}
+          to={THANKYOU_VIDEO_LINK}>
+          <Image
+            source={SPIN_WHEEL_REWARD}
+            loading="eager"
+            fit="contain"
+            accessibilityDescription="You won 500 coins — download the app to claim"
+          />
+        </Pressable> 
+      );
+    }
+
+    if (spinState === "spinning") {
+      return (
+        <Image
+          source={SPIN_WHEEL_GIF}
+          loading="eager"
+          fit="contain"
+          accessibilityDescription="Spinning the wheel..."
+        />
+      );
+    }
+
+    return (
+      <Pressable onPress={handleSpin}>
+        <Image
+          source={SPIN_WHEEL_STATIC}
+          loading="eager"
+          fit="contain"
+          accessibilityDescription="Tap to spin the wheel"
+        />
+      </Pressable>
+    );
+  };
+
+  // ---------- SPIN-WHEEL BUTTON + MODAL ----------
+  const renderSpinWheelTrigger = () => (
+   <Button
+      kind="primary"
+      appearance="monochrome"
+      expand
+      overlay={
+        <Modal padding>
+          {renderSpinWheelContent()}
+        </Modal>
+      }
+    >
+      Spin The Wheel Win up to 500 coins
+    </Button>
+  );
+
   return (
     <>
-      {/* <BlockSpacer /> */}
-
-      {isRs50Experiment ? (
-        // -------- EXPERIMENT GROUP: Rs.50 app-install card --------
-        <View
-          inlineSize="fill"
-          background="subdued"
-          border="base"
-          borderRadius="base">
-          <BlockStack spacing="none">        
-            <InlineLayout columns="fill">
-              <Pressable inlineAlignment="center" to={RS50_APP_LINK}>
-                <Image source={RS50_BANNER} loading="eager" fit="cover" />
-              </Pressable>
-            </InlineLayout>
-          </BlockStack>
-        </View>
-      ) : (
-        // -------- EVERYONE ELSE: existing banner (unchanged) --------
-        <View
-          inlineSize="fill"
-          background="subdued"
-          border="base"
-          borderRadius="base"
-        >
-          <InlineLayout columns="fill">
-            <Pressable inlineAlignment="center" to={autoSlotLink}>
-              <Image source={autoSlotBanner} loading="eager" fit="cover" />
-            </Pressable>
-          </InlineLayout>
-        </View>
+      {showSpinWheel && (
+        <>
+          {renderSpinWheelTrigger()}
+          <BlockSpacer />
+        </>
       )}
+
+      {/* Auto-slot banner — always shown */}
+      <View
+        inlineSize="fill"
+        background="subdued"
+        border="base"
+        borderRadius="none"
+      >
+        <Pressable inlineAlignment="center" to={autoSlotLink}>
+          <Image source={autoSlotBanner} loading="eager" fit="cover" />
+        </Pressable>
+      </View>
 
       <BlockSpacer />
 
@@ -248,7 +351,7 @@ function Attribution() {
             inlineSize="fill"
             background="subdued"
             border="base"
-            borderRadius="base"
+            borderRadius="none"
           >
             <InlineLayout columns="fill">
               <Pressable

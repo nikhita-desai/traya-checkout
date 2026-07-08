@@ -312,22 +312,28 @@ function Attribution() {
   );
 
   // ---------- UI ----------
+// ---------- UI ----------
   return (
     <>
-      {showSpinWheel ? (
-        renderSpinWheelTrigger()
-      ) : (
-        <View
-          inlineSize="fill"
-          background="subdued"
-          border="base"
-          borderRadius="base"
-        >
-          <Pressable inlineAlignment="center" to={autoSlotLink}>
-            <Image source={autoSlotBanner} loading="eager" fit="cover" />
-          </Pressable>
-        </View>
+      {/* Spin wheel CTA — only for eligible users, shown ABOVE the banner */}
+      {showSpinWheel && (
+        <>
+          {renderSpinWheelTrigger()}
+          <BlockSpacer />
+        </>
       )}
+
+      {/* Auto-slot banner — always shown */}
+      <View
+        inlineSize="fill"
+        background="subdued"
+        border="base"
+        borderRadius="base"
+      >
+        <Pressable inlineAlignment="center" to={autoSlotLink}>
+          <Image source={autoSlotBanner} loading="eager" fit="cover" />
+        </Pressable>
+      </View>
 
       <BlockSpacer />
 

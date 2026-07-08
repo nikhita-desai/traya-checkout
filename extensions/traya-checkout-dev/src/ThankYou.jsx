@@ -20,25 +20,6 @@ export default reactExtension(
   () => <Attribution />
 );
 
-// ---------- SPIN-THE-WHEEL ASSETS ----------
-const SPIN_WHEEL_STATIC_FEMALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_4_ade8e422-7242-48bd-88bd-de85555f98d0.png?v=1782970804";
-const SPIN_WHEEL_GIF_FEMALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_terracotta_1.gif?v=1782911559";
-const SPIN_WHEEL_REWARD_FEMALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_3_a113b5c8-c0d4-4b12-a7bd-897860920e40.png?v=1782970804";
-
-const SPIN_WHEEL_STATIC_MALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231224_2.png?v=1782910564";
-const SPIN_WHEEL_GIF_MALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_500.gif?v=1782910564";
-const SPIN_WHEEL_REWARD_MALE =
-  "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231225_1.png?v=1782911765";
-
-const THANKYOU_VIDEO_LINK = "https://trayahealth.app.link/d0fLh8aweEb";
-const SPIN_DURATION_MS = 3000;
-const SPIN_WHEEL_PREFIXES = ["1", "2", "a", "b", "c", "d", "e", "f"];
-
 function Attribution() {
   const attributes = useAttributes();
   const settings = useSettings();
@@ -72,12 +53,33 @@ function Attribution() {
     "c", "d", "e", "f", "2", "3", "4", "5", "6", "7", "8", "9",
   ];
 
+  const male2to9Prefixes = ["2", "3", "4", "5", "6", "7", "8", "9"];
+  const isMale2to9 = isMale && !!casePrefix && male2to9Prefixes.includes(casePrefix);
   const isAutoSlotUser = isAutoSlotMaleUser || isFemaleAutoSlotUser;
 
   const isFemaleAutoBanner =
     isFemale && !!casePrefix && femaleAutoPrefixes.includes(casePrefix);
   const isFemaleDefaultBanner =
     isFemale && !!casePrefix && femaleDefaultPrefixes.includes(casePrefix);
+
+  // ---------- SPIN-THE-WHEEL ASSETS ----------
+  const SPIN_WHEEL_STATIC_FEMALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_4_ade8e422-7242-48bd-88bd-de85555f98d0.png?v=1782970804";
+  const SPIN_WHEEL_GIF_FEMALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_terracotta_1.gif?v=1782911559";
+  const SPIN_WHEEL_REWARD_FEMALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_3_a113b5c8-c0d4-4b12-a7bd-897860920e40.png?v=1782970804";
+
+  const SPIN_WHEEL_STATIC_MALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231224_2.png?v=1782910564";
+  const SPIN_WHEEL_GIF_MALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/spin_the_wheel_500.gif?v=1782910564";
+  const SPIN_WHEEL_REWARD_MALE =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/Frame_2147231225_1.png?v=1782911765";
+
+  const THANKYOU_VIDEO_LINK = "https://trayahealth.app.link/d0fLh8aweEb";
+  const SPIN_DURATION_MS = 3000; 
+  const SPIN_WHEEL_PREFIXES = ["1", "0", "a", "b", "c", "d", "e", "f"];
 
   const showSpinWheel =
     spinWheelEnabled &&
@@ -89,20 +91,13 @@ function Attribution() {
   const SPIN_WHEEL_STATIC = isMale ? SPIN_WHEEL_STATIC_MALE : SPIN_WHEEL_STATIC_FEMALE;
   const SPIN_WHEEL_GIF = isMale ? SPIN_WHEEL_GIF_MALE : SPIN_WHEEL_GIF_FEMALE;
   const SPIN_WHEEL_REWARD = isMale ? SPIN_WHEEL_REWARD_MALE : SPIN_WHEEL_REWARD_FEMALE;
-
-  console.log("[SpinWheel DEBUG]", {
-    spinWheelEnabled,          // ← new
-    gender, caseId, casePrefix,
-    isMale, isFemale, showSpinWheel,
-    allAttributes: attributes.map(a => ({ key: a.key, value: a.value })),
-  });
  
   function fireSlotEvent(eventName, caseID, referrer = "", extraAttributes = {}) {
-    fetch("https://public-zxhj2.dev.hav-g.in/eventMoengageWeb", {
+    fetch("https://public-jgfas325.hav-g.in/eventMoengageWeb", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+        Authorization: "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
       },
       body: JSON.stringify({
         eventName,
@@ -121,13 +116,13 @@ function Attribution() {
   }
 
   async function recordSpinWheel() {
-    const API_URL = "https://api.dev.hav-g.in/api/spin-wheel/record";
+    const API_URL = "https://api.hav-g.in/api/spin-wheel/record";
 
     const res = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d`,
+        Authorization: `Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90`,
       },
       body: JSON.stringify({ caseId: caseId }),  
     });
@@ -161,27 +156,27 @@ function Attribution() {
     const autoBookSlot = async () => {
       try {
         // PROD Start
-        // const AUTH_HEADERS = {
-        //   "Content-Type": "application/json",
-        //   "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
-        // };
-
-        // const res = await fetch(
-        //   `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
-        //   { method: "GET", headers: AUTH_HEADERS }
-        // );
-        // PROD End
-
-        // DEV Start
         const AUTH_HEADERS = {
           "Content-Type": "application/json",
-          "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+          "Authorization": "Bearer d7ef603e-71ea-44a1-93f2-2bacd08c4a90",
         };
 
         const res = await fetch(
-          `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+          `https://api.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
           { method: "GET", headers: AUTH_HEADERS }
         );
+        // PROD End
+
+        // DEV Start
+        // const AUTH_HEADERS = {
+        //   "Content-Type": "application/json",
+        //   "Authorization": "Bearer e2623576-930b-48b6-81e2-a3cb5e37f47d",
+        // };
+
+        // const res = await fetch(
+        //   `https://api.dev.hav-g.in/v3/slots/direct/${caseId}?slotType=pc`,
+        //   { method: "GET", headers: AUTH_HEADERS }
+        // );
         // DEV End
         if (!res.ok) return;
         const data = await res.json();
@@ -230,11 +225,15 @@ function Attribution() {
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final_app_download.gif?v=1766412635";
   const FEMALE_NEW_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/new-banner-female-100.webp?v=1777361004";
+  const MALE_2_9_BANNER =
+    "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/final.webp?v=1783498004";
 
   const autoSlotBanner = isUnknownUser
     ? FALLBACK_BANNER
     : isFemale && !!caseId
     ? FEMALE_NEW_BANNER
+    : isMale2to9
+    ? MALE_2_9_BANNER
     : isMale && !isAutoSlotUser && isExperimentUser
     ? VARIATION_BANNER
     : CONTROL_BANNER;
@@ -311,11 +310,8 @@ function Attribution() {
     </Button>
   );
 
-  // ---------- UI ----------
-// ---------- UI ----------
   return (
     <>
-      {/* Spin wheel CTA — only for eligible users, shown ABOVE the banner */}
       {showSpinWheel && (
         <>
           {renderSpinWheelTrigger()}
@@ -328,7 +324,7 @@ function Attribution() {
         inlineSize="fill"
         background="subdued"
         border="base"
-        borderRadius="base"
+        borderRadius="none"
       >
         <Pressable inlineAlignment="center" to={autoSlotLink}>
           <Image source={autoSlotBanner} loading="eager" fit="cover" />
@@ -343,7 +339,7 @@ function Attribution() {
             inlineSize="fill"
             background="subdued"
             border="base"
-            borderRadius="base"
+            borderRadius="none"
           >
             <Pressable
               inlineAlignment="center"

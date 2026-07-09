@@ -1,13 +1,16 @@
 import {
   BlockSpacer,
   BlockStack,
+  Button,
   Image,
   InlineLayout,
+  Modal,
   Pressable,
   Text,
   View,
   reactExtension,
   useAttributes,
+  useSettings,
   useStorage,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useRef, useState } from "react";
@@ -16,38 +19,35 @@ export default reactExtension(
   "purchase.thank-you.block.render",
   () => <Attribution />
 );
-  
+
 function Attribution() {
   const attributes = useAttributes();
+  const settings = useSettings();
   const orderEventFired = useRef(false);
+  const [spinState, setSpinState] = useState("idle"); 
+  const spinWheelEnabled = settings?.enable_spin_wheel !== false;
+
   const rawGender =
     attributes.find((attr) => attr.key === "user__gender")?.value || "";
-
   const gender = rawGender.toLowerCase().trim();
 
   const caseId =
     attributes.find((attr) => attr.key === "caseid")?.value || null;
-
   const hairStage =
     attributes.find((attr) => attr.key === "hair_Stage")?.value?.toLowerCase() ||
     null;
 
   const casePrefix = caseId?.charAt(0)?.toLowerCase();
-
   const isMale = gender === "male";
   const isFemale = gender === "female" || gender === "f";
+
   const experimentPrefixes = ["2", "3", "4", "5", "6", "7", "8", "9"];
   const isExperimentUser =
     casePrefix && experimentPrefixes.includes(casePrefix);
 
-  // ---------- Rs.50 APP-INSTALL EXPERIMENT (MALE, O1, web_shopify) ----------
-  const rs50ExpPrefixes = ["0", "1", "a", "b", "c", "d", "e", "f"];
-  const isRs50Experiment =
-    isMale && !!caseId && !!casePrefix && rs50ExpPrefixes.includes(casePrefix);
-
-  // ---------- AUTO SLOT USERS ----------
   const isAutoSlotMaleUser = isMale && !!caseId;
-  const isFemaleAutoSlotUser = isFemale && !!caseId; // slot booking: all females
+  const isFemaleAutoSlotUser = isFemale && !!caseId;
+
   const femaleAutoPrefixes = ["0", "1", "a", "b"];
   const femaleDefaultPrefixes = [
     "c", "d", "e", "f", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -57,7 +57,6 @@ function Attribution() {
   const isMale2to9 = isMale && !!casePrefix && male2to9Prefixes.includes(casePrefix);
   const isAutoSlotUser = isAutoSlotMaleUser || isFemaleAutoSlotUser;
 
-  // banner-only splits
   const isFemaleAutoBanner =
     isFemale && !!casePrefix && femaleAutoPrefixes.includes(casePrefix);
   const isFemaleDefaultBanner =
@@ -104,10 +103,11 @@ function Attribution() {
         eventName,
         eventAttributes: {
           generalAttributes: {
-            platform: "web_shopify",
+            platform: "web_shopify", 
             domain: "traya.health",
             language: "English",
             previous_page: referrer,
+            ...extraAttributes,
           },
         },
         caseId: caseID,
@@ -152,8 +152,7 @@ function Attribution() {
   };
 
   useEffect(() => {
-    if (!isAutoSlotUser || !caseId) return;
-
+    if (!isAutoSlotUser || !caseId) return; 
     const autoBookSlot = async () => {
       try {
         // PROD Start
@@ -179,13 +178,10 @@ function Attribution() {
         //   { method: "GET", headers: AUTH_HEADERS }
         // );
         // DEV End
-
         if (!res.ok) return;
-
         const data = await res.json();
         const slotsArray = Array.isArray(data) ? data : data?.data || [];
-
-        const availableSlot = slotsArray.find((s) => s?.slots?.count >= 1); 
+        const availableSlot = slotsArray.find((s) => s?.slots?.count >= 1);
         if (!availableSlot) return;
 
         await fetch("https://api.hav-g.in/v3/slots/slot-booking", {
@@ -198,33 +194,27 @@ function Attribution() {
             order_related: false,
             is_rescheduling: true,
             from_crm: false,
-            is_autoSlotBooked: true, 
+            is_autoSlotBooked: true,
           }),
         });
       } catch (e) {
         console.error("Auto-booking error:", e);
       }
     };
-
     autoBookSlot();
   }, [isAutoSlotUser, caseId]);
 
-  // ---------- ORDER EVENT ----------
   useEffect(() => {
     if (!caseId || !isMale) return;
     if (orderEventFired.current) return;
-
     orderEventFired.current = true;
-
     fireSlotEvent("order_placed", caseId, "");
   }, [caseId, isMale]);
 
-  // ---------- USER STATE ----------
   const isUnknownUser = !gender && !caseId && !hairStage;
   const showFemaleDownloadBanner =
     isFemale && !isFemaleAutoSlotUser && !isFemaleDefaultBanner;
 
-  // ---------- BANNERS ----------
   const CONTROL_BANNER =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/control-banner.webp?v=1774875867";
   const VARIATION_BANNER =
@@ -248,9 +238,7 @@ function Attribution() {
     ? VARIATION_BANNER
     : CONTROL_BANNER;
 
-  // ---------- LINKS ----------
   const SPECIAL_CASE_ID = "e6145b3a-3ab1-4653-ba3c-2a71a87169ca";
-
   const autoSlotLink =
     caseId === SPECIAL_CASE_ID
       ? "https://trayahealth.app.link/"
@@ -353,16 +341,13 @@ function Attribution() {
             border="base"
             borderRadius="none"
           >
-            <InlineLayout columns="fill">
-              <Pressable
-                inlineAlignment="center"
-                to="https://trayahealth.app.link/xT3UrtZDvyb"
-              >
-                <Image source={DOWNLOAD_BANNER} loading="eager" fit="cover" />
-              </Pressable>
-            </InlineLayout>
+            <Pressable
+              inlineAlignment="center"
+              to="https://trayahealth.app.link/xT3UrtZDvyb"
+            >
+              <Image source={DOWNLOAD_BANNER} loading="eager" fit="cover" />
+            </Pressable>
           </View>
-
           <BlockSpacer />
         </>
       )}

@@ -105,7 +105,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("72 version - update the female banner for 100% users");
+  console.log("79 version - update the female banner for 100% users");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();

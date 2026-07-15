@@ -107,19 +107,68 @@ name = "Pincodes"
 description = "Enter Pincodes"
 
 [[extensions.settings.fields]]
+key = "pincode9"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode10"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode11"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode12"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode13"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode14"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode15"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode16"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode17"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
+key = "pincode18"
+type = "multi_line_text_field"
+name = "Pincodes"
+description = "Enter Pincodes"
+
+[[extensions.settings.fields]]
 key = "phone_numbers"
 type = "multi_line_text_field"
 name = "Phone Numbers"
 description = "Enter Phone Numbers"
 
-[[extensions.settings.fields]]
-key = "banner_image"
-type = "single_line_text_field"
-name = "Banner Image"
-description = "Enter a Url for the banner"
-
-[[extensions.settings.fields]]
-key = "banner_image2"
-type = "single_line_text_field"
-name = "Second Banner Image"
-description = "Enter a Url for the second banner"

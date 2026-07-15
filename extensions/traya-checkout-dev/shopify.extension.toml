@@ -51,6 +51,13 @@ block_progress = true
 # your extension. Learn more:
 # https://shopify.dev/docs/api/checkout-ui-extensions/unstable/configuration#settings-definition
 
+
+[[extensions.settings.fields]]
+key = "enable_spin_wheel"
+type = "boolean"
+name = "Enable Spin The Wheel"
+description = "Turn ON to show the Spin The Wheel experiment for eligible caseIds (a-f, 1, 2)." 
+
 [extensions.settings]
 [[extensions.settings.fields]]
 key = "pincode1"

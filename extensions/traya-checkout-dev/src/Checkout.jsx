@@ -19,8 +19,6 @@ export default reactExtension("purchase.checkout.block.render", () => (
   <Extension />
 ));
 
-/* ---------------- ADDRESS VALIDATION HELPERS ---------------- */
-
 const hasRepeatedSpecialCharacters = (text) => {
   if (!text || typeof text !== "string") return false;
   return /([!@#$%^&*()_+=\[\]{}|;:'",.<>?/\\`~-])\1{2,}/.test(text);
@@ -44,7 +42,6 @@ const validateAddress = (address) => {
   const city = address.city?.trim();
   const zip = address.zip?.trim();
 
-  /* ---- Address line ---- */
   if (!addr1 || addr1.length < 5) {
     errors.push({
       message: "Please enter a complete address",
@@ -67,7 +64,6 @@ const validateAddress = (address) => {
     });
   }
 
-  /* ---- City ---- */
   if (city) {
     if (city.length < 2) {
       errors.push({
@@ -87,7 +83,6 @@ const validateAddress = (address) => {
     }
   }
 
-  /* ---- PIN ---- */
   if (zip) {
     if (!/^[1-9][0-9]{5}$/.test(zip)) {
       errors.push({
@@ -100,12 +95,11 @@ const validateAddress = (address) => {
   return errors;
 };
 
-/* ---------------- MAIN EXTENSION ---------------- */
 function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("79 version - update the female banner for 100% users");
+  console.log("83 version - update the female banner for 100% users");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();
@@ -121,7 +115,6 @@ function Extension() {
 
   const FREE_PRODUCT_VARIANT_ID = "gid://shopify/ProductVariant/45277154377906";
 
-  /* ---------------- SETTINGS ---------------- */
   let {
     pincode1 = "201301",
     pincode2 = "",
@@ -131,6 +124,16 @@ function Extension() {
     pincode6 = "",
     pincode7 = "",
     pincode8 = "",
+    pincode9 = "",
+    pincode10 = "",
+    pincode11 = "",
+    pincode12 = "",
+    pincode13 = "",
+    pincode14 = "",
+    pincode15 = "",
+    pincode16 = "",
+    pincode17 = "",
+    pincode18 = "",
     phone_numbers = "9058222810",
   } = useSettings();
 
@@ -141,6 +144,16 @@ function Extension() {
   pincode6 ||= pincode1;
   pincode7 ||= pincode1;
   pincode8 ||= pincode1;
+  pincode9 ||= pincode1;
+  pincode10 ||= pincode1;
+  pincode11 ||= pincode1;
+  pincode12 ||= pincode1;
+  pincode13 ||= pincode1;
+  pincode14 ||= pincode1;
+  pincode15 ||= pincode1;
+  pincode16 ||= pincode1;
+  pincode17 ||= pincode1;
+  pincode18 ||= pincode1;
 
   const restrictPhones = useMemo(
     () => phone_numbers.split(",").map((p) => p.trim()),
@@ -149,10 +162,10 @@ function Extension() {
 
   const zipArrays = useMemo(
     () =>
-      [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8].map(
+      [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8, pincode9, pincode10, pincode11, pincode12, pincode13, pincode14, pincode15, pincode16, pincode17, pincode18].map(
         (z) => z.split(",").map((p) => p.trim())
       ),
-    [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8]
+    [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8, pincode9, pincode10, pincode11, pincode12, pincode13, pincode14, pincode15, pincode16, pincode17, pincode18]
   );
 
   function formatPhone(p) {
@@ -166,7 +179,6 @@ function Extension() {
 
   const cartTotal = subtotalAmount ? parseFloat(subtotalAmount.amount) : 0;
 
-  /* ---------------- FREE PRODUCT QTY FIX ---------------- */
   useEffect(() => {
     if (processingCartRef.current) return;
 
@@ -189,7 +201,6 @@ function Extension() {
     }
   }, [cartLines, applyCartLinesChange]);
 
-  /* ---------------- SET PREPAID ATTRIBUTE ---------------- */
   useEffect(() => {
     if (processingAttrRef.current) return;
     if (!zipcode || !shippingPhoneFormatted || !countryCode) return;
@@ -229,7 +240,6 @@ function Extension() {
     restrictPhones,
   ]);
 
-  /* ---------------- AUTO ADDRESS FILL ---------------- */
   useEffect(() => {
     if (addressAttemptedRef.current) return;
     const firstNameAttr = attributes.find((a) => a.key === "first_name");
@@ -260,11 +270,9 @@ function Extension() {
     }
   }, [attributes, changeAddress]);
 
-  /* ---------------- VALIDATION ---------------- */
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     if (!canBlockProgress) return { behavior: "allow" };
 
-    /* ---- Block if cart total is 0 ---- */
     if (cartTotal <= 0) {
       return {
         behavior: "block",

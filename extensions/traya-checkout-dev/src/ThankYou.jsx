@@ -53,7 +53,7 @@ function Attribution() {
     "c", "d", "e", "f", "2", "3", "4", "5", "6", "7", "8", "9",
   ];
 
-  const male2to9Prefixes = ["2", "3", "4", "5", "6", "7", "8", "9","1", "0", "a", "b", "c", "d", "e", "f"];
+  const male2to9Prefixes = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9","a", "b", "c", "d", "e", "f"];
   const isMale2to9 = isMale && !!casePrefix && male2to9Prefixes.includes(casePrefix);
   const isAutoSlotUser = isAutoSlotMaleUser || isFemaleAutoSlotUser;
 
@@ -62,7 +62,6 @@ function Attribution() {
   const isFemaleDefaultBanner =
     isFemale && !!casePrefix && femaleDefaultPrefixes.includes(casePrefix);
 
-  // ---------- SPIN-THE-WHEEL ASSETS ----------
   const SPIN_WHEEL_STATIC_FEMALE =
     "https://cdn.shopify.com/s/files/1/0100/1622/7394/files/image_4_ade8e422-7242-48bd-88bd-de85555f98d0.png?v=1782970804";
   const SPIN_WHEEL_GIF_FEMALE =
@@ -294,7 +293,6 @@ function Attribution() {
     );
   };
 
-  // ---------- SPIN-WHEEL BUTTON + MODAL ----------
   const renderSpinWheelTrigger = () => (
    <Button
       kind="primary"
@@ -319,7 +317,6 @@ function Attribution() {
         </>
       )}
 
-      {/* Auto-slot banner — always shown */}
       <View
         inlineSize="fill"
         background="subdued"

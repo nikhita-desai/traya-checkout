@@ -5,84 +5,71 @@
  * @typedef {import("../generated/api").FunctionRunResult} FunctionRunResult
  */
 
+const PRIORITY = ["cod", "razorpay", "snapmint", "simpl"];
 /**
  * @param {RunInput} input
  * @returns {FunctionRunResult}
  */
 export function run(input) {
+  /** @type {Array<any>} */
   const operations = [];
 
-  const totalAmount = parseFloat(input.cart.cost.totalAmount.amount);
+  const methods = input.paymentMethods ?? [];
+  const totalAmount = parseFloat(input.cart?.cost?.totalAmount?.amount ?? "0");
 
-  // ---------------- FIND PAYMENT METHODS ----------------
-  const cod = input.paymentMethods.find(
-    (m) =>
-      m.__typename === "PaymentCustomizationPaymentMethod" &&
-      m.name.toLowerCase().includes("cod")
-  );
+  /** @param {string} needle */
+  const byName = (needle) =>
+    methods.find((m) => m.name?.toLowerCase().includes(needle));
 
-  const razorPay = input.paymentMethods.find(
-    (m) =>
-      m.__typename === "PaymentCustomizationPaymentMethod" &&
-      m.name.toLowerCase().includes("razorpay")
-  );
-
-  const simpl = input.paymentMethods.find(
-    (m) =>
-      m.__typename === "PaymentCustomizationPaymentMethod" &&
-      m.name.toLowerCase().includes("simpl")
-  );
-
-  const snapmint = input.paymentMethods.find(
-    (m) =>
-      m.__typename === "PaymentCustomizationPaymentMethod" &&
-      m.name.toLowerCase().includes("snapmint")
-  );
-
-  // ---------------- PAYMENT ORDER ----------------
-  if (razorPay) operations.push({ move: { paymentMethodId: razorPay.id, index: 0 }});
-  if (simpl) operations.push({ move: { paymentMethodId: simpl.id, index: 1 }});
-  if (snapmint) operations.push({ move: { paymentMethodId: snapmint.id, index: 2 }});
-
-  const prepaidAttr = input.cart.prepaid;
-
+  // ---------------- COD ELIGIBILITY ----------------
+  const prepaidAttr = input.cart?.prepaid;
   const hasEligibilityData =
     prepaidAttr?.value !== null && prepaidAttr?.value !== undefined;
 
   const prepaid = prepaidAttr?.value === "true";
+  const countryCode =
+    input.cart?.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
 
-  // ---------------- COD LOGIC ----------------
-  if (cod) {
-    let shouldHideCOD = false;
+  let hideCOD = false;
+  if (totalAmount < 1000 || totalAmount > 10000) hideCOD = true;          
+  if (hasEligibilityData && countryCode && countryCode !== "IN") hideCOD = true;
+  if (hasEligibilityData && !prepaid) hideCOD = true;         
 
-    // 1Cart value rule (always apply)
-    if (totalAmount < 1000 || totalAmount > 10000) {
-      shouldHideCOD = true;
-    }
+  const cod = byName("cod");
 
-    // Country rule (only after user enters address)
-    const countryCode =
-      input.cart.deliveryGroups?.[0]?.deliveryAddress?.countryCode;
+  const hiddenIds = new Set();
+  if (cod && hideCOD) hiddenIds.add(cod.id);
 
-    if (hasEligibilityData && countryCode && countryCode !== "IN") {
-      shouldHideCOD = true;
-    }
+  /** @type {Array<any>} */
+  const ordered = [];
+  const seen = new Set();
 
-    // Phone + pincode rule from checkout.jsx
-    if (hasEligibilityData && !prepaid) {
-      shouldHideCOD = true;
-    }
-
-    if (shouldHideCOD) {
-      operations.push({
-        hide: { paymentMethodId: cod.id },
-      });
-    } else {
-      operations.push({
-        move: { paymentMethodId: cod.id, index: 3 },
-      });
+  for (const needle of PRIORITY) {
+    const method = byName(needle);
+    if (method && !hiddenIds.has(method.id) && !seen.has(method.id)) {
+      ordered.push(method);
+      seen.add(method.id);
     }
   }
+
+  for (const id of hiddenIds) {
+    operations.push({ hide: { paymentMethodId: id } });
+  }
+
+  ordered.forEach((m, index) => {
+    operations.push({ move: { paymentMethodId: m.id, index } });
+  });
+
+  console.log(
+    "PAYMENT_METHODS:",
+    JSON.stringify(methods.map((m) => ({ id: m.id, name: m.name })))
+  );
+  console.log("HIDE_COD:", hideCOD);
+  console.log(
+    "FINAL_ORDER:",
+    JSON.stringify(ordered.map((m) => m.name))
+  );
+  console.log("OPERATIONS:", JSON.stringify(operations));
 
   return { operations };
 }

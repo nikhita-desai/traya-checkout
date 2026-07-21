@@ -249,7 +249,6 @@ function Attribution() {
       ? `https://form.traya.health/pages/reschedule-slot/${caseId}?orderPlatform=shopify`
       : `https://form.traya.health/pages/reschedule-slot?orderPlatform=shopify`;
 
-  // ---------- SPIN-WHEEL CONTENT (rendered inside Modal) ----------
   const renderSpinWheelContent = () => {
     if (spinState === "won") {
       return (

@@ -99,7 +99,7 @@ function Extension() {
   const changeAttribute = useApplyAttributeChange();
   const applyCartLinesChange = useApplyCartLinesChange();
   const changeAddress = useApplyShippingAddressChange();
-  console.log("83 version - update the female banner for 100% users");
+  console.log("84 version - update the female banner for 100% users");
 
   const attributes = useAttributes();
   const cartLines = useCartLines();
@@ -126,14 +126,6 @@ function Extension() {
     pincode8 = "",
     pincode9 = "",
     pincode10 = "",
-    pincode11 = "",
-    pincode12 = "",
-    pincode13 = "",
-    pincode14 = "",
-    pincode15 = "",
-    pincode16 = "",
-    pincode17 = "",
-    pincode18 = "",
     phone_numbers = "9058222810",
   } = useSettings();
 
@@ -146,14 +138,6 @@ function Extension() {
   pincode8 ||= pincode1;
   pincode9 ||= pincode1;
   pincode10 ||= pincode1;
-  pincode11 ||= pincode1;
-  pincode12 ||= pincode1;
-  pincode13 ||= pincode1;
-  pincode14 ||= pincode1;
-  pincode15 ||= pincode1;
-  pincode16 ||= pincode1;
-  pincode17 ||= pincode1;
-  pincode18 ||= pincode1;
 
   const restrictPhones = useMemo(
     () => phone_numbers.split(",").map((p) => p.trim()),
@@ -162,10 +146,10 @@ function Extension() {
 
   const zipArrays = useMemo(
     () =>
-      [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8, pincode9, pincode10, pincode11, pincode12, pincode13, pincode14, pincode15, pincode16, pincode17, pincode18].map(
+      [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8, pincode9, pincode10].map(
         (z) => z.split(",").map((p) => p.trim())
       ),
-    [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8, pincode9, pincode10, pincode11, pincode12, pincode13, pincode14, pincode15, pincode16, pincode17, pincode18]
+    [pincode1, pincode2, pincode3, pincode4, pincode5, pincode6, pincode7, pincode8, pincode9, pincode10]
   );
 
   function formatPhone(p) {

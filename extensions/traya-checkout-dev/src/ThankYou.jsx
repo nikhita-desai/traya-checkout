@@ -1,17 +1,12 @@
 import {
-  BlockSpacer,  
-  BlockStack,  
-  Button,  
-  Image, 
-  InlineLayout, 
-  Modal,  
-  Pressable,  
-  Text,  
-  View,  
-  reactExtension,  
-  useAttributes,  
-  useSettings,  
-  useStorage,
+  BlockSpacer,
+  Image,
+  Modal,
+  Pressable,
+  View,
+  reactExtension,
+  useAttributes,
+  useSettings,
 } from "@shopify/ui-extensions-react/checkout";
 import { useEffect, useRef, useState } from "react";
 
